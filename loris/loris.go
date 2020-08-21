@@ -1,8 +1,8 @@
 package loris
 
 import (
-	"text/template"
 	"bytes"
+	"text/template"
 )
 
 var (
@@ -22,10 +22,10 @@ type Loris struct {
 }
 
 type LorisVals struct {
-	Endpoint string
-	Length int
+	Endpoint    string
+	Length      int
 	ContentType string
-	Body string
+	Body        string
 }
 
 func (l Loris) Build(vals LorisVals) string {
@@ -34,7 +34,7 @@ func (l Loris) Build(vals LorisVals) string {
 		panic(err)
 	}
 
-	return resolved.String();
+	return resolved.String()
 }
 
 func New() Loris {
@@ -44,7 +44,7 @@ func New() Loris {
 		panic(err)
 	}
 
-	return Loris {
+	return Loris{
 		Tmpl: tmpl,
 	}
 }
