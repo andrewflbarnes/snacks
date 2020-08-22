@@ -4,6 +4,7 @@ import (
 	"andrewflbarnes/snacks/loris"
 	"andrewflbarnes/snacks/payloads"
 	"bufio"
+	"flag"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -13,17 +14,55 @@ import (
 )
 
 var (
-	port        = 8989
 	logger      = log.WithFields(log.Fields{})
-	embedServer = true
+	embedServer bool
+	dest        string
 )
 
 func main() {
-	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp: true,
-	})
+	flagsLoris := flag.NewFlagSet("loris", flag.ExitOnError)
+	flagLogJson := flagsLoris.Bool("j", false, "Enables JSON logging")
+	flagLogDebug := flagsLoris.Bool("v", false, "Enables debug logging")
+	flagLogTrace := flagsLoris.Bool("vv", false, "Enables trace logging")
+	flagEmbedServer := flagsLoris.Bool("embed", false, "Runs an embedded server to connect to, useful for tests")
+	flagHost := flagsLoris.String("host", "localhost", "The host to send the payload to")
+	flagPort := flagsLoris.Int("port", 80, "The port to send the payload to")
+
+	if len(os.Args) < 2 {
+		logger.Fatal("Subcommand \"loris\" must be used")
+	}
+
+	switch os.Args[1] {
+	case "loris":
+		flagsLoris.Parse(os.Args[2:])
+	default:
+		logger.Fatal("Subcommand \"loris\" must be used")
+	}
+
+	flag.Parse()
+
+	host := *flagHost
+	port := *flagPort
+
+	if *flagLogTrace {
+		log.SetLevel(log.TraceLevel)
+	} else if *flagLogDebug {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
+
+	if *flagLogJson {
+		log.SetFormatter(&log.JSONFormatter{})
+	} else {
+		log.SetFormatter(&log.TextFormatter{
+			FullTimestamp: true,
+		})
+	}
+
+	embedServer = *flagEmbedServer
+
 	log.SetOutput(os.Stdout)
-	log.SetLevel(log.TraceLevel)
 
 	logger.Info("Starting")
 
@@ -80,7 +119,6 @@ User-Agent: snacks
 	}
 
 	// Create a client connection to end the payload over
-	host := "localhost"
 	conn, err := clientConnect(host, port)
 	if err != nil {
 		logger.WithFields(log.Fields{
