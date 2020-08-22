@@ -1,50 +1,74 @@
 package loris
 
 import (
-	"bytes"
-	"text/template"
+	log "github.com/sirupsen/logrus"
+	"net"
 )
 
 var (
-	httpTmpl = `POST {{.Endpoint}} HTTP/1.1
-Content-Length: {{.Length}}
-Content-Type: {{.ContentType}}
-User-Agent: snacks
-
-{{.Body}}
-
-
-`
+	logger = log.WithFields(log.Fields{})
 )
 
-type Loris struct {
-	Tmpl *template.Template
+type Loris interface {
+	Send(payload []byte, conn net.Conn) (chan bool, chan []byte, error)
 }
 
-type LorisVals struct {
-	Endpoint    string
-	Length      int
-	ContentType string
-	Body        string
+type DefaultLoris struct {
+	sStrat SendStrategy
+	rStrat ReceiveStrategy
 }
 
-func (l Loris) Build(vals LorisVals) string {
-	var resolved bytes.Buffer
-	if err := l.Tmpl.Execute(&resolved, vals); err != nil {
-		panic(err)
-	}
+func (l DefaultLoris) Send(payload []byte, conn net.Conn) (chan bool, chan []byte, error) {
+	sent := make(chan bool)
+	response := make(chan []byte)
 
-	return resolved.String()
+	go l.send(payload, conn, sent, response)
+
+	return sent, response, nil
 }
 
-func New() Loris {
-	tmpl, err := template.New("default").Parse(httpTmpl)
+func (l DefaultLoris) send(payload []byte, conn net.Conn, sent chan bool, response chan []byte) {
+	readIndex := 0
+	length := len(payload)
+	var segment []byte
 
-	if err != nil {
-		panic(err)
+	for readIndex < length {
+		segment, readIndex = l.sStrat.GetNextBytes(readIndex, payload)
+		logger.WithFields(log.Fields{
+			"segment":       string(segment),
+			"payloadLength": length,
+			"readIndex":     readIndex,
+		}).Trace("Sending segment")
+
+		l.sStrat.Wait(readIndex, length)
+
+		if _, err := conn.Write(segment); err != nil {
+			logger.WithFields(log.Fields{
+				"segment":       segment,
+				"payloadLength": length,
+				"readIndex":     readIndex,
+				"error":         err,
+			}).Fatal("Failed while writing payload segment")
+		}
 	}
 
-	return Loris{
-		Tmpl: tmpl,
+	sent <- true
+	logger.Debug("Payload sent")
+
+	response <- l.rStrat.GetResponse(conn)
+}
+
+func New(sStrat SendStrategy, rStrat ReceiveStrategy) Loris {
+	return DefaultLoris{
+		sStrat,
+		rStrat,
 	}
+}
+
+func NewSendOnly(sStrat SendStrategy) Loris {
+	return New(sStrat, NoReceiveStrategy{})
+}
+
+func NewTest() Loris {
+	return New(StubSendStrategy{}, NewlineReceiveStrategy{})
 }
