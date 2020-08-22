@@ -65,8 +65,9 @@ User-Agent: snacks
 	// Create a new loris instance
 	sendStrategy := loris.FixedByteSendStrategy{
 		BytesPerSend: 5,
+		DelayPerSend: 50,
 	}
-	l := loris.New(sendStrategy, loris.NewlineReceiveStrategy{})
+	l := loris.DefaultLoris{SStrat: sendStrategy, RStrat: loris.NewlineReceiveStrategy{}}
 	// l := loris.NewTest()
 
 	if embedServer {

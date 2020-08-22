@@ -19,6 +19,7 @@ func (s StubSendStrategy) Wait(currentReadIndex int, totalLength int) {}
 
 type FixedByteSendStrategy struct {
 	BytesPerSend int
+	DelayPerSend int
 }
 
 func (s FixedByteSendStrategy) GetNextBytes(currentReadIndex int, payload []byte) ([]byte, int) {
@@ -28,7 +29,7 @@ func (s FixedByteSendStrategy) GetNextBytes(currentReadIndex int, payload []byte
 
 func (s FixedByteSendStrategy) Wait(currentReadIndex int, totalLength int) {
 	// Stub implementation - could use another backoff strategy
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(time.Duration(s.DelayPerSend) * time.Millisecond)
 }
 
 func min(a, b int) int {

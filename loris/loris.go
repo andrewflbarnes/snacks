@@ -14,8 +14,8 @@ type Loris interface {
 }
 
 type DefaultLoris struct {
-	sStrat SendStrategy
-	rStrat ReceiveStrategy
+	SStrat SendStrategy
+	RStrat ReceiveStrategy
 }
 
 func (l DefaultLoris) Send(payload []byte, conn net.Conn) (chan bool, chan []byte, error) {
@@ -33,14 +33,14 @@ func (l DefaultLoris) send(payload []byte, conn net.Conn, sent chan bool, respon
 	var segment []byte
 
 	for readIndex < length {
-		segment, readIndex = l.sStrat.GetNextBytes(readIndex, payload)
+		segment, readIndex = l.SStrat.GetNextBytes(readIndex, payload)
 		logger.WithFields(log.Fields{
 			"segment":       string(segment),
 			"payloadLength": length,
 			"readIndex":     readIndex,
 		}).Trace("Sending segment")
 
-		l.sStrat.Wait(readIndex, length)
+		l.SStrat.Wait(readIndex, length)
 
 		if _, err := conn.Write(segment); err != nil {
 			logger.WithFields(log.Fields{
@@ -55,20 +55,13 @@ func (l DefaultLoris) send(payload []byte, conn net.Conn, sent chan bool, respon
 	sent <- true
 	logger.Debug("Payload sent")
 
-	response <- l.rStrat.GetResponse(conn)
-}
-
-func New(sStrat SendStrategy, rStrat ReceiveStrategy) Loris {
-	return DefaultLoris{
-		sStrat,
-		rStrat,
-	}
+	response <- l.RStrat.GetResponse(conn)
 }
 
 func NewSendOnly(sStrat SendStrategy) Loris {
-	return New(sStrat, NoReceiveStrategy{})
+	return DefaultLoris{sStrat, NoReceiveStrategy{}}
 }
 
 func NewTest() Loris {
-	return New(StubSendStrategy{}, NewlineReceiveStrategy{})
+	return DefaultLoris{StubSendStrategy{}, NewlineReceiveStrategy{}}
 }
