@@ -1,4 +1,4 @@
-package loris
+package judy
 
 import (
 	"flag"
@@ -11,29 +11,29 @@ import (
 
 	"github.com/andrewflbarnes/snacks/internal/helper"
 	"github.com/andrewflbarnes/snacks/pkg/http"
-	"github.com/andrewflbarnes/snacks/pkg/loris"
+	"github.com/andrewflbarnes/snacks/pkg/judy"
 	log "github.com/sirupsen/logrus"
 )
 
 var (
 	logger = log.WithFields(log.Fields{})
 
-	flagsLoris = flag.NewFlagSet("loris", flag.ExitOnError)
-	flagOnce   = flagsLoris.Bool("once", false, "Establish a single slow loris connection")
-	flagTime   = flagsLoris.Duration("time", time.Hour, "How long to run the test for (not applicable if -once enabled)")
-	flagTest   = flagsLoris.Bool("test", false, "Runs an embedded server to connect to")
-	flagHost   = flagsLoris.String("host", "localhost", "The host to send the payload to")
-	flagPath   = flagsLoris.String("path", "/", "The path to send the request to")
-	flagPort   = flagsLoris.Int("port", 80, "The port to send the payload to")
-	flagSize   = flagsLoris.Int("size", 1_000_000, "The size of the request payload to send")
-	flagDelay  = flagsLoris.Int("sd", 1000, "The delay in ms between each send")
-	flagBytes  = flagsLoris.Int("sb", 5, "The number of bytes to send in each send")
-	flagMax    = flagsLoris.Int("max", 1000, "The maximum number of connections to establish")
+	flagsJudy = flag.NewFlagSet("judy", flag.ExitOnError)
+	flagOnce  = flagsJudy.Bool("once", false, "Establish a single connection")
+	flagTime  = flagsJudy.Duration("time", time.Hour, "How long to run the test for (not applicable if -once enabled)")
+	flagTest  = flagsJudy.Bool("test", false, "Runs an embedded server to connect to")
+	flagHost  = flagsJudy.String("host", "localhost", "The host to send the payload to")
+	flagPath  = flagsJudy.String("path", "/", "The path to send the request to")
+	flagPort  = flagsJudy.Int("port", 80, "The port to send the payload to")
+	flagSize  = flagsJudy.Int("size", 1_000_000, "The size of the request payload to send")
+	flagDelay = flagsJudy.Int("sd", 1000, "The delay in ms between each send")
+	flagBytes = flagsJudy.Int("sb", 5, "The number of bytes to send in each send")
+	flagMax   = flagsJudy.Int("max", 1000, "The maximum number of connections to establish")
 )
 
-func Loris() {
-	logFlags := helper.InitLogFlags(flagsLoris)
-	flagsLoris.Parse(os.Args[2:])
+func Judy() {
+	logFlags := helper.InitLogFlags(flagsJudy)
+	flagsJudy.Parse(os.Args[2:])
 	logFlags.Apply()
 
 	port := *flagPort
@@ -48,9 +48,9 @@ func Loris() {
 
 	logger.Info("Starting")
 
-	// Create a new loris instance
-	sendStrategy := loris.NewFixedByteSendStrategy(sendBytes, sendDelay)
-	l := loris.NewLoris(sendStrategy, maxConns)
+	// Create a new Judy instance
+	sendStrategy := judy.NewFixedByteSendStrategy(sendBytes, sendDelay)
+	l := judy.NewJudy(sendStrategy, maxConns)
 
 	if test {
 		// Start a server which will receive the payload
@@ -66,18 +66,20 @@ func Loris() {
 
 		executeOnce(l, prefix)
 
-		logger.Info("Slow Loris attack complete")
+		logger.Info("Judy attack complete")
 	} else {
 		logExecutionDetails("continuous", prefix)
 
 		go l.ExecuteContinuous(host, port, prefix, size)
 
-		l.Stop()
 		time.Sleep(duration)
+		l.Stop()
 
 		logger.WithFields(log.Fields{
 			"duration": duration,
-		}).Info("Slow Loris attack complete")
+		}).Info("Judy attack complete")
+
+		time.Sleep(time.Duration(sendDelay) * time.Millisecond)
 	}
 }
 
@@ -94,7 +96,7 @@ func logExecutionDetails(execution string, prefix []byte) {
 		"sendBytes": *flagBytes,
 		"sendDelay": *flagDelay,
 		"maxConns":  *flagMax,
-	}).Info("Starting Slow Loris attack")
+	}).Info("Starting Judy attack")
 }
 
 func isPrintable(bytes []byte) bool {
@@ -109,7 +111,7 @@ func isPrintable(bytes []byte) bool {
 	return true
 }
 
-func executeOnce(l loris.Loris, prefix []byte) {
+func executeOnce(l judy.Judy, prefix []byte) {
 	host := *flagHost
 	port := *flagPort
 	size := *flagSize

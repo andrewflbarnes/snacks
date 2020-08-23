@@ -1,10 +1,11 @@
-package loris
+package judy
 
 import (
 	"bytes"
-	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (

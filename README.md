@@ -20,11 +20,14 @@ go install
 
 ### Run
 
-##### Loris
+##### Judy
+
+Judy launches a RUDY (r-u-dead-yet) attach using JSON as the content-type over more typical
+MIME types found in other implementations.
 
 For a full list of options, defaults and what they do
 ```bash
-./snacks loris -h
+./snacks judy -h
 ```
 
 The below command will
@@ -35,7 +38,5 @@ The below command will
 - attempt to open port `8888` on the target (defaults to `localhost`)
 - enable trace logging
 ```bash
-./snacks loris -size 1000000 -sd 10 -sb 7 -path /boom -port 8888 -vv
+./snacks judy -size 1000000 -sd 10 -sb 7 -path /boom -port 8888 -vv
 ```
-
-At the moment the Slow Loris implementation is geared towards HTTP POST requests with application/json.

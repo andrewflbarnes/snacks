@@ -1,4 +1,4 @@
-package loris
+package judy
 
 import (
 	"fmt"
@@ -8,23 +8,23 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type defaultLoris struct {
+type defaultJudy struct {
 	SStrat      SendStrategy
 	MaxConns    int
 	connections int
 	done        bool
 }
 
-func (l defaultLoris) Execute(conn net.Conn, prefix []byte, size int) chan bool {
+func (l *defaultJudy) Execute(conn net.Conn, prefix []byte, size int) chan bool {
 	return l.executeOnConnection(conn, prefix, size)
 }
 
-func (l defaultLoris) ExecuteContinuous(host string, port int, prefix []byte, size int) {
+func (l *defaultJudy) ExecuteContinuous(host string, port int, prefix []byte, size int) {
 	target := fmt.Sprintf("%s:%d", host, port)
 
 	go l.track()
 
-	for {
+	for !l.done {
 		// TODO make configurable
 		<-time.After(100 * time.Millisecond)
 
@@ -53,18 +53,20 @@ func (l defaultLoris) ExecuteContinuous(host string, port int, prefix []byte, si
 	}
 }
 
-func (l defaultLoris) Stop() {
+func (l *defaultJudy) Stop() {
+	logger.Infof("Stop %v", l.done)
 	l.done = true
+	logger.Infof("Stoped %v", l.done)
 }
 
-func (l *defaultLoris) track() {
-	for {
-		time.Sleep(5 * time.Second)
+func (l *defaultJudy) track() {
+	for !l.done {
 		logger.Infof("Managing %d connections", l.connections)
+		time.Sleep(5 * time.Second)
 	}
 }
 
-func (l *defaultLoris) executeOnConnection(conn net.Conn, prefix []byte, size int) chan bool {
+func (l *defaultJudy) executeOnConnection(conn net.Conn, prefix []byte, size int) chan bool {
 	closed := make(chan bool)
 
 	go l.send(conn, prefix, size, closed)
@@ -72,7 +74,7 @@ func (l *defaultLoris) executeOnConnection(conn net.Conn, prefix []byte, size in
 	return closed
 }
 
-func (l *defaultLoris) send(conn net.Conn, prefix []byte, size int, closed chan bool) {
+func (l *defaultJudy) send(conn net.Conn, prefix []byte, size int, closed chan bool) {
 	l.connections++
 
 	defer func() {
@@ -101,6 +103,17 @@ func (l *defaultLoris) send(conn net.Conn, prefix []byte, size int, closed chan 
 		case <-l.SStrat.Wait(sendIndex, length):
 		}
 
+		// Check if done here - the nature of this task means most time will be spent on the Wait method
+		if l.done {
+			logger.WithFields(log.Fields{
+				"sentBytes":      sendIndex,
+				"remainingBytes": length - sendIndex,
+				"remote":         conn.RemoteAddr().String(),
+				"local":          conn.LocalAddr().String(),
+			}).Debug("Execution marked as done, returning")
+			return
+		}
+
 		segment, sendIndex = l.SStrat.GetNextBytes(sendIndex, prefix, size)
 		logger.WithFields(log.Fields{
 			"segment":       string(segment),
@@ -122,7 +135,7 @@ func (l *defaultLoris) send(conn net.Conn, prefix []byte, size int, closed chan 
 	logger.Debug("Payload sent")
 }
 
-func (l defaultLoris) monitorConnection(conn net.Conn, done chan<- bool) {
+func (l defaultJudy) monitorConnection(conn net.Conn, done chan<- bool) {
 	defer func() { done <- true }()
 
 	read := make([]byte, 1)
