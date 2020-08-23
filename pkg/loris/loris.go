@@ -2,8 +2,9 @@
 package loris
 
 import (
-	log "github.com/sirupsen/logrus"
 	"net"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -20,12 +21,19 @@ var (
 // for ensuring the protocol is enforced
 type Loris interface {
 	Execute(conn net.Conn, prefix []byte, size int) chan bool
+	// TODO use URI?
+	ExecuteContinuous(host string, port int, prefix []byte, size int)
+	// TODO Add graceful close method so we don't depend on program close
+	Stop()
 }
 
 // NewLoris returns a new Loris instance with the requested send and receive
 // strategies.
-func NewLoris(sStrat SendStrategy) Loris {
+func NewLoris(sStrat SendStrategy, maxConns int) Loris {
 	return defaultLoris{
 		sStrat,
+		maxConns,
+		0,
+		false,
 	}
 }

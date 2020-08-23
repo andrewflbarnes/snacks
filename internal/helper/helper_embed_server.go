@@ -2,25 +2,24 @@ package helper
 
 import (
 	"bufio"
-	log "github.com/sirupsen/logrus"
+	"fmt"
 	"io"
 	"net"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func HttpServer(port int, ready chan bool) {
-	strPort := strconv.Itoa(port)
-	host := "localhost"
+	local := fmt.Sprintf("localhost:%d", port)
 	logger.WithFields(log.Fields{
-		"host": host,
-		"port": port,
+		"local": local,
 	}).Info("Starting server")
-	ln, err := net.Listen("tcp", host+":"+strPort)
+	ln, err := net.Listen("tcp", local)
 
 	if err != nil {
 		logger.WithFields(log.Fields{
-			"host":  host,
-			"port":  port,
+			"local": local,
 			"error": err,
 		}).Fatal("Unable to start server")
 	}
@@ -29,17 +28,16 @@ func HttpServer(port int, ready chan bool) {
 
 	for {
 		conn, err := ln.Accept()
-		logger.WithFields(log.Fields{
-			"host": host,
-			"port": port,
-		}).Info("Accepted connection")
 		if err != nil {
 			logger.WithFields(log.Fields{
-				"host":  host,
 				"port":  port,
 				"error": err,
 			}).Warn("Failed to accept connection")
 		} else {
+			logger.WithFields(log.Fields{
+				"port":   port,
+				"remote": conn.RemoteAddr().String(),
+			}).Debug("Accepted connection")
 			go handleConnection(conn)
 		}
 	}
@@ -61,7 +59,8 @@ func handleConnection(conn net.Conn) {
 					"addr":   conn.RemoteAddr().String(),
 					"error":  err,
 					"length": strconv.Itoa(segmentSize),
-				}).Fatal("Socket read failed")
+				}).Warn("Socket read failed")
+				return
 			}
 			logger.WithFields(log.Fields{
 				"segment": string(body),
@@ -72,7 +71,8 @@ func handleConnection(conn net.Conn) {
 				logger.WithFields(log.Fields{
 					"addr":  conn.RemoteAddr().String(),
 					"error": err,
-				}).Fatal("Socket newline read failed")
+				}).Error("Socket newline read failed")
+				return
 			}
 			logger.WithFields(log.Fields{
 				"line": msg,

@@ -8,12 +8,12 @@ import (
 )
 
 var (
-	sendBuffer = []byte{}
-	sendMux    = sync.Mutex{}
+	sharedSendBuffer = []byte{}
+	sendMux          = sync.Mutex{}
 )
 
 func initSendBuffer(size int) {
-	more := size - len(sendBuffer)
+	more := size - len(sharedSendBuffer)
 	if more < 1 {
 		return
 	}
@@ -21,7 +21,7 @@ func initSendBuffer(size int) {
 	sendMux.Lock()
 	defer sendMux.Unlock()
 
-	currentSize := len(sendBuffer)
+	currentSize := len(sharedSendBuffer)
 	more = size - currentSize
 	if more > 0 {
 		logger.WithFields(log.Fields{
@@ -31,24 +31,13 @@ func initSendBuffer(size int) {
 		}).Trace("Increasing send buffer size")
 
 		trail := bytes.Repeat([]byte{'a'}, more)
-		sendBuffer = append(sendBuffer, trail...)
+		sharedSendBuffer = append(sharedSendBuffer, trail...)
 	}
 }
 
 type SendStrategy interface {
 	GetNextBytes(currentReadIndex int, payload []byte, size int) ([]byte, int)
 	Wait(currentReadIndex int, totalLength int) <-chan time.Time
-}
-
-type StubSendStrategy struct{}
-
-func (s StubSendStrategy) GetNextBytes(currentReadIndex int, payload []byte, size int) ([]byte, int) {
-	// ignore the arbitrary trailing size
-	return []byte(payload), len(payload)
-}
-
-func (s StubSendStrategy) Wait(currentReadIndex int, totalLength int) <-chan time.Time {
-	return time.After(0)
 }
 
 type fixedByteSendStrategy struct {
@@ -77,7 +66,7 @@ func (s fixedByteSendStrategy) GetNextBytes(currentReadIndex int, payload []byte
 
 	if currentReadIndex >= payloadLength {
 		arbSize := nextReadIndex - currentReadIndex
-		return sendBuffer[:arbSize], nextReadIndex
+		return sharedSendBuffer[:arbSize], nextReadIndex
 	}
 
 	if nextReadIndex <= payloadLength {
@@ -86,7 +75,7 @@ func (s fixedByteSendStrategy) GetNextBytes(currentReadIndex int, payload []byte
 
 	trail := payload[currentReadIndex:]
 	arbSize := min(s.BytesPerSend-len(trail), size)
-	arb := sendBuffer[:arbSize]
+	arb := sharedSendBuffer[:arbSize]
 	logger.WithFields(log.Fields{
 		"sendBytes": s.BytesPerSend,
 		"iCurrent":  currentReadIndex,
