@@ -1,7 +1,7 @@
 package main
 
 import (
-	"andrewflbarnes/snacks/run"
+	"github.com/andrewflbarnes/snacks/internal/loris"
 	log "github.com/sirupsen/logrus"
 	"os"
 )
@@ -19,7 +19,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "loris":
-		run.Loris()
+		loris.Loris()
 	default:
 		logger.Fatal("Subcommand \"loris\" must be used")
 	}

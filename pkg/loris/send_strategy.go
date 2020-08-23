@@ -37,7 +37,7 @@ func initSendBuffer(size int) {
 
 type SendStrategy interface {
 	GetNextBytes(currentReadIndex int, payload []byte, size int) ([]byte, int)
-	Wait(currentReadIndex int, totalLength int)
+	Wait(currentReadIndex int, totalLength int) <-chan time.Time
 }
 
 type StubSendStrategy struct{}
@@ -47,7 +47,9 @@ func (s StubSendStrategy) GetNextBytes(currentReadIndex int, payload []byte, siz
 	return []byte(payload), len(payload)
 }
 
-func (s StubSendStrategy) Wait(currentReadIndex int, totalLength int) {}
+func (s StubSendStrategy) Wait(currentReadIndex int, totalLength int) <-chan time.Time {
+	return time.After(0)
+}
 
 type fixedByteSendStrategy struct {
 	BytesPerSend int
@@ -96,9 +98,8 @@ func (s fixedByteSendStrategy) GetNextBytes(currentReadIndex int, payload []byte
 	return append(trail, arb...), nextReadIndex
 }
 
-func (s fixedByteSendStrategy) Wait(currentReadIndex int, totalLength int) {
-	// Stub implementation - could use another backoff strategy
-	time.Sleep(time.Duration(s.DelayPerSend) * time.Millisecond)
+func (s fixedByteSendStrategy) Wait(currentReadIndex int, totalLength int) <-chan time.Time {
+	return time.After(time.Duration(s.DelayPerSend) * time.Millisecond)
 }
 
 func min(a, b int) int {

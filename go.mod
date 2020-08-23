@@ -1,4 +1,4 @@
-module andrewflbarnes/snacks
+module github.com/andrewflbarnes/snacks
 
 go 1.13
 

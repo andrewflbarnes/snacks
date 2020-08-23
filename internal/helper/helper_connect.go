@@ -1,4 +1,4 @@
-package loris
+package helper
 
 import (
 	log "github.com/sirupsen/logrus"
@@ -6,12 +6,12 @@ import (
 	"strconv"
 )
 
-func clientConnect(host string, port int) (net.Conn, error) {
+func DialTcp(host string, port int) (net.Conn, error) {
 	dest := host + ":" + strconv.Itoa(port)
 	logger.WithFields(log.Fields{
 		"host": host,
 		"port": port,
-	}).Info("Opening client connection")
+	}).Debug("Opening client connection")
 
 	return net.Dial("tcp", dest)
 }

@@ -1,4 +1,4 @@
-package run
+package helper
 
 import (
 	"bufio"
@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func httpServer(port int, ready chan bool) {
+func HttpServer(port int, ready chan bool) {
 	strPort := strconv.Itoa(port)
 	host := "localhost"
 	logger.WithFields(log.Fields{
