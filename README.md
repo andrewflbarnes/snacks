@@ -4,6 +4,13 @@ A small collection of basically (poorly) implemented tools for pen testing.
 
 This project is more of a learning experience in golang so will likely fall short of a lot of go best practices
 
+### Clone
+```bash
+go get github.com/andrewflbarnes/snacks
+# or
+git clone git@github.com:andrewflbarnes/snacks
+```
+
 ### Build
 ```bash
 go build
@@ -12,18 +19,23 @@ go install
 ```
 
 ### Run
+
+##### Loris
+
+For a full list of options, defaults and what they do
 ```bash
-# help
 ./snacks loris -h
-./snacks loris [-port <port>] [-host <host>] [-v[v]] [embed]
-# e.g. the below will start an embedded server on port 8989, send a payload to it and log at trace level
-./snacks loris -embed -port 8989 -vv
 ```
 
-At the moment there is a single stubbed implementation for Slow Loris.
+The below command will
+- send 1000000 arbitrary bytes to hold the connection open (not including HTTP POST headers)
+- wait 10ms between sending each segment of bytes
+- send 7 bytes in every segment (including the initial HTTP POST headers)
+- set the path to `/boom` in the HTTP POST request
+- attempt to open port `8888` on the target (defaults to `localhost`)
+- enable trace logging
+```bash
+./snacks loris -size 1000000 -sd 10 -sb 7 -path /boom -port 8888 -vv
+```
 
-The program will generate a payload and send it to the server using a strategy which
-determines the number of bytes to send per delay period and how long the delay period is.
-
-To change the number of bytes sent and the delay between sends changes need to be made in
-`main.go` and then rebuilt.
+At the moment the Slow Loris implementation is geared towards HTTP POST requests with application/json.
