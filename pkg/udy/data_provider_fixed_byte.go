@@ -3,7 +3,6 @@ package udy
 import (
 	"bytes"
 	"sync"
-	"time"
 
 	"github.com/andrewflbarnes/snacks/pkg/maths"
 	log "github.com/sirupsen/logrus"
@@ -39,14 +38,12 @@ func initSendBuffer(size int) {
 
 type fixedByteDataProvider struct {
 	BytesPerSend int
-	DelayPerSend time.Duration
 }
 
-func NewFixedByteDataProvider(BytesPerSend int, DelayPerSend time.Duration) DataProvider {
+func NewFixedByteDataProvider(BytesPerSend int) DataProvider {
 	initSendBuffer(BytesPerSend)
 	return fixedByteDataProvider{
 		BytesPerSend,
-		DelayPerSend,
 	}
 }
 
@@ -61,8 +58,4 @@ func (s fixedByteDataProvider) GetNextBytes(currentDataIndex int, size int) ([]b
 
 	arbSize := nextDataIndex - currentDataIndex
 	return sharedSendBuffer[:arbSize], nextDataIndex
-}
-
-func (s fixedByteDataProvider) Wait(currentDataIndex int, totalLength int) <-chan time.Time {
-	return time.After(s.DelayPerSend)
 }

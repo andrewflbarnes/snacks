@@ -9,7 +9,8 @@ import (
 )
 
 type defaultUdy struct {
-	SStrat      DataProvider
+	Provider    DataProvider
+	Sender      SendStrategy
 	MaxConns    int
 	connections int
 }
@@ -109,10 +110,10 @@ func (l *defaultUdy) send(conn net.Conn, prefix []byte, endMark int, closed chan
 				"local":       conn.LocalAddr().String(),
 			}).Warn("Received bytes on socket, ending")
 			return
-		case <-l.SStrat.Wait(currentMark, endMark):
+		case <-l.Sender.Wait(currentMark, endMark):
 		}
 
-		segment, currentMark = l.SStrat.GetNextBytes(currentMark, endMark)
+		segment, currentMark = l.Provider.GetNextBytes(currentMark, endMark)
 		logger.WithFields(log.Fields{
 			"segment":     string(segment),
 			"currentMark": currentMark,

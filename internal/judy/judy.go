@@ -50,9 +50,9 @@ func Judy() {
 	logger.Info("Starting")
 
 	// Create a new Udy instance
-	sendStrategy := udy.NewFixedByteSendStrategy(sendBytes, sendDelay)
-	// sendStrategy := udy.NewRepeaterSendStrategy([]byte("x-snacks-slow-loris: boom\n"), size, sendDelay)
-	l := udy.NewUdy(sendStrategy, maxConns)
+	dataProvider := udy.NewFixedByteDataProvider(sendBytes)
+	sendStrategy := udy.NewFixedSendStrategy(sendDelay)
+	l := udy.NewUdy(dataProvider, sendStrategy, maxConns)
 
 	if test {
 		// Start a server which will receive the payload

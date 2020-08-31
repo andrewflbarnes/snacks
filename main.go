@@ -9,9 +9,7 @@ import (
 )
 
 var (
-	logger      = log.WithFields(log.Fields{})
-	embedServer bool
-	dest        string
+	logger = log.WithFields(log.Fields{})
 )
 
 func main() {
@@ -25,6 +23,6 @@ func main() {
 	case "loris":
 		loris.Loris()
 	default:
-		logger.Fatal("Subcommand \"judy\" must be used")
+		logger.Fatal("Subcommand [judy, loris] must be used")
 	}
 }

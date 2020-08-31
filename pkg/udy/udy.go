@@ -37,9 +37,10 @@ type Udy interface {
 }
 
 // NewUdy returns a new Udy instance with the requested send strategy
-func NewUdy(sStrat DataProvider, maxConns int) Udy {
+func NewUdy(dataProvider DataProvider, sendStrategy SendStrategy, maxConns int) Udy {
 	return &defaultUdy{
-		sStrat,
+		dataProvider,
+		sendStrategy,
 		maxConns,
 		0,
 	}
