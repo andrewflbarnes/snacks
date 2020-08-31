@@ -9,7 +9,7 @@ import (
 )
 
 type defaultUdy struct {
-	SStrat      SendStrategy
+	SStrat      DataProvider
 	MaxConns    int
 	connections int
 }

@@ -37,32 +37,32 @@ func initSendBuffer(size int) {
 	}
 }
 
-type fixedByteSendStrategy struct {
+type fixedByteDataProvider struct {
 	BytesPerSend int
 	DelayPerSend time.Duration
 }
 
-func NewFixedByteSendStrategy(BytesPerSend int, DelayPerSend time.Duration) SendStrategy {
+func NewFixedByteDataProvider(BytesPerSend int, DelayPerSend time.Duration) DataProvider {
 	initSendBuffer(BytesPerSend)
-	return fixedByteSendStrategy{
+	return fixedByteDataProvider{
 		BytesPerSend,
 		DelayPerSend,
 	}
 }
 
-func (s fixedByteSendStrategy) GetNextBytes(currentReadIndex int, size int) ([]byte, int) {
-	nextReadIndex := maths.Min(currentReadIndex+s.BytesPerSend, size)
+func (s fixedByteDataProvider) GetNextBytes(currentDataIndex int, size int) ([]byte, int) {
+	nextDataIndex := maths.Min(currentDataIndex+s.BytesPerSend, size)
 
 	logger.WithFields(log.Fields{
 		"sendBytes": s.BytesPerSend,
-		"iCurrent":  currentReadIndex,
-		"iNext":     nextReadIndex,
+		"iCurrent":  currentDataIndex,
+		"iNext":     nextDataIndex,
 	}).Trace("Generate next bytes")
 
-	arbSize := nextReadIndex - currentReadIndex
-	return sharedSendBuffer[:arbSize], nextReadIndex
+	arbSize := nextDataIndex - currentDataIndex
+	return sharedSendBuffer[:arbSize], nextDataIndex
 }
 
-func (s fixedByteSendStrategy) Wait(currentReadIndex int, totalLength int) <-chan time.Time {
+func (s fixedByteDataProvider) Wait(currentDataIndex int, totalLength int) <-chan time.Time {
 	return time.After(s.DelayPerSend)
 }
