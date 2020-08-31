@@ -13,16 +13,12 @@ git clone git@github.com:andrewflbarnes/snacks
 
 ### Build
 ```bash
-go build
+make
 # or
-go install
+make install
 ```
 
 ### Run
-
-Note: After an attack by snacks is complete it may take up to the send delay (`-sd`) time adter the `attack complete` message
-before the application actually stops. This is beacuse there may be goroutines which have only just entered the delay fo there
-processing.
 
 ##### Judy
 
