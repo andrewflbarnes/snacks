@@ -1,9 +1,10 @@
-package helper
+package flags
 
 import (
 	"flag"
-	log "github.com/sirupsen/logrus"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func InitLogFlags(flagSet *flag.FlagSet) LogFlags {

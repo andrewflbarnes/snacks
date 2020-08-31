@@ -11,6 +11,7 @@ import (
 	"github.com/andrewflbarnes/snacks/pkg/strs"
 	"github.com/andrewflbarnes/snacks/pkg/udy"
 
+	"github.com/andrewflbarnes/snacks/internal/flags"
 	"github.com/andrewflbarnes/snacks/internal/helper"
 	"github.com/andrewflbarnes/snacks/pkg/http"
 	log "github.com/sirupsen/logrus"
@@ -28,12 +29,15 @@ var (
 	flagBytes   = flagsJudy.Int("sb", 5, "The number of bytes to send in each send")
 	flagMax     = flagsJudy.Int("max", 1000, "The maximum number of connections to establish")
 	flagContent = flagsJudy.String("type", http.ApplicationJSON.String(), "The content type of data to send")
+	flagPrefix  = flagsJudy.String("prefix", "", "The payload prefix to use, should be used for custom types")
+
+	logFlags  = flags.InitLogFlags(flagsJudy)
+	authFlags = flags.InitAuthFlags(flagsJudy)
 
 	dest *url.URL
 )
 
 func Judy() {
-	logFlags := helper.InitLogFlags(flagsJudy)
 	flagsJudy.Parse(os.Args[2:])
 	logFlags.Apply()
 
@@ -129,9 +133,14 @@ func getPayloadPrefix() []byte {
 	host := dest.Host
 	endpoint := dest.Path
 	verb := http.Post
-	media := http.ToContentType(*flagContent)
 
-	contentTypePrefix := helper.GetPayloadPrefix(media)
+	media := helper.ToContentType(*flagContent)
+	var contentTypePrefix []byte
+	if len(*flagPrefix) > 0 {
+		contentTypePrefix = []byte(*flagPrefix)
+	} else {
+		contentTypePrefix = helper.GetPayloadPrefix(media)
+	}
 	contentTypePrefixLen := len(contentTypePrefix)
 
 	headers := map[string]string{
@@ -139,7 +148,11 @@ func getPayloadPrefix() []byte {
 		"Accept":         "*/*",
 		"Content-Length": strconv.Itoa(size + contentTypePrefixLen),
 		"Host":           host,
-		"Authorization":  "Basic dG9tY2F0OnRvbWNhdA==",
+	}
+
+	auth, ok := authFlags.GetAuth()
+	if ok {
+		headers["Authorization"] = auth
 	}
 
 	builder := http.HttpRequestBuilder{

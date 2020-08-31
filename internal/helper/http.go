@@ -13,23 +13,28 @@ var (
 )
 
 func ToContentType(contentType string) http.ContentType {
-	media := http.ToContentType(contentType)
-	if media == http.ContentTypeNotFound {
+	val := http.ToContentType(contentType)
+
+	if val == http.ContentTypeNotFound {
 		logger.WithFields(log.Fields{
 			"contentType": contentType,
-		}).Fatal("Unrecognised content type")
+		}).Warn("Content type not found, creating custom type")
+		return http.ContentType(contentType)
 	}
-	return media
+
+	return val
 }
 
 func GetPayloadPrefix(media http.ContentType) []byte {
-	payloadPrefix, ok := payloadPrefixes[media]
+	prefix, ok := payloadPrefixes[media]
 
 	if !ok {
 		logger.WithFields(log.Fields{
-			"contentType": media,
-		}).Fatal("No payload prefix found")
+			"media":   media,
+			"default": "a=",
+		}).Warn("No payload prefix found, defaulting")
+		return []byte("a=")
 	}
 
-	return payloadPrefix
+	return prefix
 }

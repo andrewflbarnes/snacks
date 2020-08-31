@@ -10,6 +10,7 @@ import (
 	"github.com/andrewflbarnes/snacks/pkg/strs"
 	"github.com/andrewflbarnes/snacks/pkg/udy"
 
+	"github.com/andrewflbarnes/snacks/internal/flags"
 	"github.com/andrewflbarnes/snacks/internal/helper"
 	"github.com/andrewflbarnes/snacks/pkg/http"
 	log "github.com/sirupsen/logrus"
@@ -27,11 +28,12 @@ var (
 	flagMax    = flagsLoris.Int("max", 1000, "The maximum number of connections to establish")
 	flagHeader = flagsLoris.String("header", "x-snacks-slow-loris: boom", "The HTTP header to repeat for the attack")
 
+	logFlags = flags.InitLogFlags(flagsLoris)
+
 	dest *url.URL
 )
 
 func Loris() {
-	logFlags := helper.InitLogFlags(flagsLoris)
 	flagsLoris.Parse(os.Args[2:])
 	logFlags.Apply()
 
@@ -127,7 +129,6 @@ func getPayloadPrefix() []byte {
 	verb := http.Post
 
 	headers := map[string]string{
-		"Content-Type":   http.ApplicationJSON.String(),
 		"Accept":         "*/*",
 		"Content-Length": "1000",
 		"Host":           host,

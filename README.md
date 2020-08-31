@@ -60,3 +60,24 @@ The below command will
 ```bash
 ./snacks loris -size 1000000 -sd 1s -head "x-slow: loris" -vv localhost:8888/boom
 ```
+
+### Useful options
+
+The `loris` attack will not use most of these options as it never completes sending the HTTP headers
+
+##### Content type
+
+If a specific content-type header is required use the `-type` flag. e.g.
+```bash
+./snacks -type application/x-www-form-urlencoded ...
+```
+
+Corresponding entries must exist in the http and helper packages.
+
+##### Authorization
+
+If authorization is required use either `-basic` or `-bearer` flags e.g.
+```bash
+./snacks -basic tomcat:tomcat ...
+./snacks -bearer 0123456789ABCDEF ...
+```
