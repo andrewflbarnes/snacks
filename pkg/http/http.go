@@ -6,15 +6,20 @@ import (
 	"strings"
 )
 
-type HttpRequestBuilder struct {
+// RequestBuilder holds various HTTP request related metadata and can be used
+// to generate partial HTTP requests
+type RequestBuilder struct {
 	Verb     verb
 	Headers  map[string]string
 	Body     string
 	Endpoint string
-	Proto    HttpProto
+	Proto    Protocol
 }
 
-func (b HttpRequestBuilder) Build() string {
+// Build returns a string containing a partial HTTP request including the required header
+// and, if the verb permits, an empty line followed by the beginning of the HTTP body. This
+// may be used as the beginning of RUDY style attacks.
+func (b RequestBuilder) Build() string {
 	payload := b.BuildHead()
 
 	// Empty line after headers
@@ -28,11 +33,14 @@ func (b HttpRequestBuilder) Build() string {
 	return payload
 }
 
-func (b HttpRequestBuilder) BuildBytes() []byte {
+// BuildBytes returns a byte slice containing a partial HTTP request as per Build
+func (b RequestBuilder) BuildBytes() []byte {
 	return []byte(b.Build())
 }
 
-func (b HttpRequestBuilder) BuildHead() string {
+// BuildHead returns a string containing a partial HTTP request including the required headers.
+// This may be used as the beginning of Slow Loris style attacks.
+func (b RequestBuilder) BuildHead() string {
 	var payload string
 
 	// Add request line
@@ -47,7 +55,7 @@ func (b HttpRequestBuilder) BuildHead() string {
 	// header.
 	if b.Verb.hasBody() {
 		include := true
-		for key, _ := range b.Headers {
+		for key := range b.Headers {
 			if strings.ToLower(key) == "content-type" {
 				include = false
 			}
@@ -63,10 +71,11 @@ func (b HttpRequestBuilder) BuildHead() string {
 	return payload
 }
 
-func (b HttpRequestBuilder) BuildHeadBytes() []byte {
+// BuildHeadBytes returns a byte slice containing a partial HTTP request as per BuildHead
+func (b RequestBuilder) BuildHeadBytes() []byte {
 	return []byte(b.BuildHead())
 }
 
-func (b HttpRequestBuilder) String() string {
+func (b RequestBuilder) String() string {
 	return b.Build()
 }

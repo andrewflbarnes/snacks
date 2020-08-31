@@ -1,22 +1,15 @@
 package http
 
-type HttpProto int
+// Protocol represents an HTTP protocol
+type Protocol string
 
+// Valid HTTP protocols
 const (
-	Http10 HttpProto = iota
-	Http11
-	Http20
+	HTTP10 Protocol = "HTTP/1.0"
+	HTTP11 Protocol = "HTTP/1.1"
+	HTTP20 Protocol = "HTTP/2.0"
 )
 
-func (p HttpProto) String() string {
-	switch p {
-	case Http10:
-		return "HTTP/1.0"
-	case Http11:
-		return "HTTP/1.1"
-	case Http20:
-		return "HTTP/2.0"
-	}
-
-	return "UNRECOGNISED"
+func (p Protocol) String() string {
+	return string(p)
 }

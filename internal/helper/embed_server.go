@@ -10,7 +10,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func HttpServer(port string, ready chan bool) {
+// HTTPServer starts an HTTP server listening on the specificed port. HTTP is "supported" only in
+// that the server will read up to each newline until a blank line is read at which point it will
+// attempt to read the body in segments of 20 bytes. Neither chunk encoding, content length or any
+// other methods are supported to accurately read the payload.
+func HTTPServer(port string, ready chan bool) {
 	local := fmt.Sprintf("localhost:%s", port)
 	logger.WithFields(log.Fields{
 		"local": local,

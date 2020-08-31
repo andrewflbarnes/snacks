@@ -1,3 +1,4 @@
+// Package judy orchestrates RUDY stlye attacks
 package judy
 
 import (
@@ -8,12 +9,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/andrewflbarnes/snacks/pkg/strs"
-	"github.com/andrewflbarnes/snacks/pkg/udy"
-
 	"github.com/andrewflbarnes/snacks/internal/flags"
 	"github.com/andrewflbarnes/snacks/internal/helper"
 	"github.com/andrewflbarnes/snacks/pkg/http"
+	"github.com/andrewflbarnes/snacks/pkg/strs"
+	"github.com/andrewflbarnes/snacks/pkg/udy"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -37,6 +37,7 @@ var (
 	dest *url.URL
 )
 
+// Judy parses the application flags and starts a RUDY style attack as required
 func Judy() {
 	flagsJudy.Parse(os.Args[2:])
 	logFlags.Apply()
@@ -47,7 +48,7 @@ func Judy() {
 	} else {
 		urlString = "http://localhost:80"
 	}
-	dest = helper.ParseUrl(urlString)
+	dest = helper.ParseURL(urlString)
 
 	test := *flagTest
 	size := *flagSize
@@ -67,7 +68,7 @@ func Judy() {
 	if test {
 		// Start a server which will receive the payload
 		serverReady := make(chan bool)
-		go helper.HttpServer(dest.Port(), serverReady)
+		go helper.HTTPServer(dest.Port(), serverReady)
 		<-serverReady
 	}
 
@@ -85,13 +86,10 @@ func Judy() {
 		go l.ExecuteContinuous(dest, prefix, size)
 
 		time.Sleep(duration)
-		// l.Stop()
 
 		logger.WithFields(log.Fields{
 			"duration": duration,
 		}).Info("Judy attack complete")
-
-		time.Sleep(sendDelay)
 	}
 }
 
@@ -155,8 +153,8 @@ func getPayloadPrefix() []byte {
 		headers["Authorization"] = auth
 	}
 
-	builder := http.HttpRequestBuilder{
-		Proto:    http.Http11,
+	builder := http.RequestBuilder{
+		Proto:    http.HTTP11,
 		Verb:     verb,
 		Endpoint: endpoint,
 		Body:     "",

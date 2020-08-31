@@ -5,7 +5,13 @@ import (
 	"strings"
 )
 
-func ParseUrl(urlString string) *url.URL {
+// ParseURL parses the string representation of a URL and returns a url.URL pointer.
+// The string should comply with RFC3986 with the following exception - if the scheme
+// is not set, or not one of http or https, then it will prepend http:// prior to passimg.
+// Aside from the scheme, the following defaults are set if not present: port 80, host
+// localhost.
+// If the urlString is empty then the default http://localhost:80 is used
+func ParseURL(urlString string) *url.URL {
 	if len(urlString) == 0 {
 		defaultURL, _ := url.Parse("http://localhost:80/")
 		return defaultURL

@@ -14,7 +14,7 @@ var (
 	logger = log.WithFields(log.Fields{})
 )
 
-// Udy is the interface defining the API for executing slow attacks
+// Udy is the interface defining the API for executing slow attacks.
 //
 // Execute launches a UDY type attack for this instance on a single connection.
 // It returns a channel indicating when the send has complete and a channel
@@ -28,10 +28,17 @@ var (
 // The operands define the target to attach, a payload prefix and the number of arbitrary
 // bytes/repeats to send to maintain the attack per connection.
 // The payload prefix is useful for ensuring the protocol is enforced.
+//
+// Stop gracefully stops the execution in progress. The connections and executions will not
+// be fully stopped after a call to this method is made. It will be complete after waiting
+// for the amount of time specified as the send delay on the SendStrategy as we need to wait
+// for any in progress waits to complete. A call is only required if the containing program
+// is expected to continue executing after the attack is complete. Snacks does not make use
+// of this.
 type Udy interface {
 	Execute(conn net.Conn, prefix []byte, size int) chan bool
 	ExecuteContinuous(dest *url.URL, prefix []byte, size int)
-	// TODO graceful close
+	Stop()
 }
 
 // New returns a new Udy instance with a specific data provider, send strategy, and
@@ -42,5 +49,6 @@ func New(dataProvider DataProvider, sendStrategy SendStrategy, maxConns int) Udy
 		sendStrategy,
 		maxConns,
 		0,
+		true,
 	}
 }

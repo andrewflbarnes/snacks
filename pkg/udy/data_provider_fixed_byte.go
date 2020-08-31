@@ -36,10 +36,15 @@ func initSendBuffer(size int) {
 	}
 }
 
+// fixedByteDataProvider implements DataProvider providing arbitrary data. The current
+// index is used to track how many bytes have been returned so far and the size is the
+// number of bytes to return in total.
 type fixedByteDataProvider struct {
 	BytesPerSend int
 }
 
+// FixedByteDataProvider returns a new fixedByteDataProvider instance and initialises an
+// unexported shared data buffer for it to use.
 func FixedByteDataProvider(BytesPerSend int) DataProvider {
 	initSendBuffer(BytesPerSend)
 	return fixedByteDataProvider{

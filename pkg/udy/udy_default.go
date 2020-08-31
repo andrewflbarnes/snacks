@@ -9,10 +9,15 @@ import (
 )
 
 type defaultUdy struct {
-	SStrat      DataProvider
+	Provider    DataProvider
 	Sender      SendStrategy
 	MaxConns    int
 	connections int
+	running     bool
+}
+
+func (l *defaultUdy) Stop() {
+	l.running = false
 }
 
 func (l *defaultUdy) Execute(conn net.Conn, prefix []byte, size int) chan bool {
@@ -27,6 +32,10 @@ func (l *defaultUdy) ExecuteContinuous(dest *url.URL, prefix []byte, size int) {
 	for {
 		// TODO make configurable
 		<-time.After(100 * time.Millisecond)
+
+		if !l.running {
+			return
+		}
 
 		if l.connections >= l.MaxConns {
 			continue
@@ -59,6 +68,9 @@ func (l *defaultUdy) track() {
 	for {
 		logger.Infof("Managing %d connections", l.connections)
 		time.Sleep(5 * time.Second)
+		if !l.running {
+			return
+		}
 	}
 }
 
@@ -70,8 +82,6 @@ func (l *defaultUdy) executeOnConnection(conn net.Conn, prefix []byte, size int)
 	return closed
 }
 
-// Note: marks are specific to the send strategy implementation. They may relate to the number
-// of bytes sent of the number of iterations complete for example.
 func (l *defaultUdy) send(conn net.Conn, prefix []byte, endMark int, closed chan bool) {
 	l.connections++
 
@@ -97,6 +107,9 @@ func (l *defaultUdy) send(conn net.Conn, prefix []byte, endMark int, closed chan
 		return
 	}
 
+	// Note: marks are specific to the DataProvider implementation (see the docs). They may relate to the number
+	// of bytes sent of the number of repeitions complete, for example.
+	// The current mark should be updated by the data provider only.
 	currentMark := 0
 
 	var segment []byte
@@ -116,7 +129,11 @@ func (l *defaultUdy) send(conn net.Conn, prefix []byte, endMark int, closed chan
 		case <-l.Sender.Wait(currentMark, endMark):
 		}
 
-		segment, currentMark = l.SStrat.GetNextBytes(currentMark, endMark)
+		if !l.running {
+			return
+		}
+
+		segment, currentMark = l.Provider.GetNextBytes(currentMark, endMark)
 		logger.WithFields(log.Fields{
 			"segment":     string(segment),
 			"currentMark": currentMark,

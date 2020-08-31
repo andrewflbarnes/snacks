@@ -20,6 +20,10 @@ go install
 
 ### Run
 
+Note: After an attack by snacks is complete it may take up to the send delay (`-sd`) time adter the `attack complete` message
+before the application actually stops. This is beacuse there may be goroutines which have only just entered the delay fo there
+processing.
+
 ##### Judy
 
 Judy launches a RUDY (r-u-dead-yet) attack using JSON as the content-type over more typical
@@ -33,7 +37,7 @@ For a full list of options, defaults and what they do
 The below command will
 - send 1000000 arbitrary bytes to hold the connection open (not including HTTP POST headers)
 - wait 10ms between sending each segment of bytes
-- send 7 bytes in every segment (including the initial HTTP POST headers)
+- send 7 bytes in every segment (excluding the initial HTTP POST headers)
 - set the path to `/boom` in the HTTP POST request and send to `localhost:8888`
 - enable trace logging
 ```bash
@@ -72,10 +76,18 @@ If a specific content-type header is required use the `-type` flag. e.g.
 ./snacks -type application/x-www-form-urlencoded ...
 ```
 
-If a specific payload prefix is required (say for unsupported content types) use the `-prefix` flag. e.g.
-for an XML content-type (which would otherwise default to using `a=` as the payload prefix)
+For supported content types this will set a default payload prefix which may be overridden with `-prefix`
+
+To override a payload prefix use the `-prefix` flag. e.g. for a default JSON content-type (which would otherwise
+default to using `{"a":"` as the payload prefix)
+```bash
+./snacks -prefix '{"payload":"' ...
+```
+
+For custom content-types and prefix apyloads specify both `-type` and `-prefix` e.g.
 ```bash
 ./snacks -type application/xml -prefix '<payload>' ...
+./snacks -type application/vnd.my.custom.type -prefix '1|string|payload|' ...
 ```
 
 ##### Authorization

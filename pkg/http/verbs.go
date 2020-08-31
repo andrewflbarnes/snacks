@@ -1,7 +1,9 @@
 package http
 
+// verb represents and HTTP verb/action
 type verb string
 
+// Valid HTTP verbs
 const (
 	Head    verb = "HEAD"
 	Get     verb = "GET"
