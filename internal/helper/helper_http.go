@@ -5,7 +5,8 @@ import (
 )
 
 var (
-	ApplicationJsonPrefix = newMediaPrefixImpl(http.ApplicationJson, []byte(`{"a":"`))
+	ApplicationJsonPrefix               = newMediaPrefixImpl(http.ApplicationJson, []byte(`{"a":"`))
+	ApplicationXWWWFormUrlencodedPrefix = newMediaPrefixImpl(http.ApplicationXWWWFormUrlEncoded, []byte(`a=`))
 )
 
 type MediaPrefix interface {

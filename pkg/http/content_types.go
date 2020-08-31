@@ -1,7 +1,8 @@
 package http
 
 const (
-	ApplicationJson ContentType = "application/json"
+	ApplicationJson               ContentType = "application/json"
+	ApplicationXWWWFormUrlEncoded ContentType = "application/x-www-form-urlencoded"
 )
 
 type ContentType string

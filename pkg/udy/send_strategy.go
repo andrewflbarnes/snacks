@@ -1,11 +1,10 @@
-package judy
+package udy
 
 import (
 	"time"
 )
 
 type SendStrategy interface {
-	GetNextBytes(currentReadIndex int, payload []byte, size int) ([]byte, int)
+	GetNextBytes(currentReadIndex int, size int) ([]byte, int)
 	Wait(currentReadIndex int, totalLength int) <-chan time.Time
-	// TODO graceful close
 }
