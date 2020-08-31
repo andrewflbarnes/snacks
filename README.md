@@ -72,7 +72,11 @@ If a specific content-type header is required use the `-type` flag. e.g.
 ./snacks -type application/x-www-form-urlencoded ...
 ```
 
-Corresponding entries must exist in the http and helper packages.
+If a specific payload prefix is required (say for unsupported content types) use the `-prefix` flag. e.g.
+for an XML content-type (which would otherwise default to using `a=` as the payload prefix)
+```bash
+./snacks -type application/xml -prefix '<payload>' ...
+```
 
 ##### Authorization
 
