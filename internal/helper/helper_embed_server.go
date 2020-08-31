@@ -10,8 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func HttpServer(port int, ready chan bool) {
-	local := fmt.Sprintf("localhost:%d", port)
+func HttpServer(port string, ready chan bool) {
+	local := fmt.Sprintf("localhost:%s", port)
 	logger.WithFields(log.Fields{
 		"local": local,
 	}).Info("Starting server")

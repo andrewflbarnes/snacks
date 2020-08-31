@@ -5,6 +5,7 @@ package udy
 
 import (
 	"net"
+	"net/url"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -33,7 +34,7 @@ var (
 type Udy interface {
 	Execute(conn net.Conn, prefix []byte, size int) chan bool
 	// TODO use URI?
-	ExecuteContinuous(host string, port int, prefix []byte, size int)
+	ExecuteContinuous(dest *url.URL, prefix []byte, size int)
 }
 
 // NewUdy returns a new Udy instance with the requested send strategy

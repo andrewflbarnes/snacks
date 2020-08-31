@@ -2,8 +2,8 @@ package judy
 
 import (
 	"flag"
-	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -23,13 +23,12 @@ var (
 	flagOnce  = flagsJudy.Bool("once", false, "Establish a single connection")
 	flagTime  = flagsJudy.Duration("time", time.Hour, "How long to run the test for (not applicable if -once enabled)")
 	flagTest  = flagsJudy.Bool("test", false, "Runs an embedded server to connect to")
-	flagHost  = flagsJudy.String("host", "localhost", "The host to send the payload to")
-	flagPath  = flagsJudy.String("path", "/", "The path to send the request to")
-	flagPort  = flagsJudy.Int("port", 80, "The port to send the payload to")
 	flagSize  = flagsJudy.Int("size", 1_000_000, "The size of the request payload to send")
 	flagDelay = flagsJudy.Duration("sd", 1*time.Second, "The delay in ms between each send")
 	flagBytes = flagsJudy.Int("sb", 5, "The number of bytes to send in each send")
 	flagMax   = flagsJudy.Int("max", 1000, "The maximum number of connections to establish")
+
+	dest *url.URL
 )
 
 func Judy() {
@@ -37,9 +36,15 @@ func Judy() {
 	flagsJudy.Parse(os.Args[2:])
 	logFlags.Apply()
 
-	port := *flagPort
+	var urlString string
+	if len(flagsJudy.Args()) > 0 {
+		urlString = flagsJudy.Args()[0]
+	} else {
+		urlString = "http://localhost:80"
+	}
+	dest = helper.ParseUrl(urlString)
+
 	test := *flagTest
-	host := *flagHost
 	size := *flagSize
 	once := *flagOnce
 	sendBytes := *flagBytes
@@ -57,7 +62,7 @@ func Judy() {
 	if test {
 		// Start a server which will receive the payload
 		serverReady := make(chan bool)
-		go helper.HttpServer(port, serverReady)
+		go helper.HttpServer(dest.Port(), serverReady)
 		<-serverReady
 	}
 
@@ -72,7 +77,7 @@ func Judy() {
 	} else {
 		logExecutionDetails("continuous", prefix)
 
-		go l.ExecuteContinuous(host, port, prefix, size)
+		go l.ExecuteContinuous(dest, prefix, size)
 
 		time.Sleep(duration)
 		// l.Stop()
@@ -91,7 +96,7 @@ func logExecutionDetails(execution string, prefix []byte) {
 	}
 	logger.WithFields(log.Fields{
 		"type":      execution,
-		"target":    fmt.Sprintf("%s:%d", *flagHost, *flagPort),
+		"target":    dest.Host,
 		"size":      *flagSize,
 		"duration":  *flagTime,
 		"test":      *flagTest,
@@ -114,11 +119,9 @@ func isPrintable(bytes []byte) bool {
 }
 
 func executeOnce(l udy.Udy, prefix []byte) {
-	host := *flagHost
-	port := *flagPort
 	size := *flagSize
+	target := dest.Host
 
-	target := fmt.Sprintf("%s:%d", host, port)
 	conn, err := net.Dial("tcp", target)
 	if err != nil {
 		logger.WithFields(log.Fields{
@@ -138,10 +141,9 @@ func getPayloadPrefix() []byte {
 }
 
 func getHTTPPayload(verb http.HttpVerb, media helper.MediaPrefix) []byte {
-	host := *flagHost
-	port := *flagPort
 	size := *flagSize
-	endpoint := *flagPath
+	host := dest.Host
+	endpoint := dest.Path
 
 	contentTypePrefix := media.Prefix()
 	contentTypePrefixLen := len(contentTypePrefix)
@@ -150,7 +152,7 @@ func getHTTPPayload(verb http.HttpVerb, media helper.MediaPrefix) []byte {
 		"Content-Type":   media.Name(),
 		"Accept":         "*/*",
 		"Content-Length": strconv.Itoa(size + contentTypePrefixLen),
-		"Host":           host + ":" + strconv.Itoa(port),
+		"Host":           host,
 		"Authorization":  "Basic dG9tY2F0OnRvbWNhdA==",
 	}
 

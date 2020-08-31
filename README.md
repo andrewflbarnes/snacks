@@ -22,7 +22,7 @@ go install
 
 ##### Judy
 
-Judy launches a RUDY (r-u-dead-yet) attach using JSON as the content-type over more typical
+Judy launches a RUDY (r-u-dead-yet) attack using JSON as the content-type over more typical
 MIME types found in other implementations.
 
 For a full list of options, defaults and what they do
@@ -34,9 +34,29 @@ The below command will
 - send 1000000 arbitrary bytes to hold the connection open (not including HTTP POST headers)
 - wait 10ms between sending each segment of bytes
 - send 7 bytes in every segment (including the initial HTTP POST headers)
-- set the path to `/boom` in the HTTP POST request
-- attempt to open port `8888` on the target (defaults to `localhost`)
+- set the path to `/boom` in the HTTP POST request and send to `localhost:8888`
 - enable trace logging
 ```bash
-./snacks judy -size 1000000 -sd 10 -sb 7 -path /boom -port 8888 -vv
+./snacks judy -size 1000000 -sd 10ms -sb 7 -vv localhost:8888/boom
+```
+
+
+##### Loris
+
+Loris launches a Slow Loris attack by repeatedly sending a duplicate HTTP header every fixed time period.
+At the moment this will always send the whole header, a `-sb`/SendBytes option is not currently available.
+
+For a full list of options, defaults and what they do
+```bash
+./snacks loris -h
+```
+
+The below command will
+- send 1000000 repeat instances of the header (not most application servers limit the max. number of HTTP headers)
+- wait 1s between sending each header
+- set the header to be set to `x-slow: loris`
+- set the path to `/boom` in the HTTP POST request and send to `localhost:8888`
+- enable trace logging
+```bash
+./snacks loris -size 1000000 -sd 1s -head "x-slow: loris" -vv localhost:8888/boom
 ```

@@ -1,15 +1,15 @@
 package udy
 
 import (
-	"fmt"
 	"net"
+	"net/url"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type defaultUdy struct {
-	Provider    DataProvider
+	SStrat      DataProvider
 	Sender      SendStrategy
 	MaxConns    int
 	connections int
@@ -19,8 +19,8 @@ func (l *defaultUdy) Execute(conn net.Conn, prefix []byte, size int) chan bool {
 	return l.executeOnConnection(conn, prefix, size)
 }
 
-func (l *defaultUdy) ExecuteContinuous(host string, port int, prefix []byte, size int) {
-	target := fmt.Sprintf("%s:%d", host, port)
+func (l *defaultUdy) ExecuteContinuous(dest *url.URL, prefix []byte, size int) {
+	target := dest.Host
 
 	go l.track()
 
@@ -35,7 +35,9 @@ func (l *defaultUdy) ExecuteContinuous(host string, port int, prefix []byte, siz
 		logger.WithFields(log.Fields{
 			"target": target,
 		}).Trace("Establishing connection")
+
 		conn, err := net.Dial("tcp", target)
+
 		if err != nil {
 			logger.WithFields(log.Fields{
 				"target": target,
@@ -86,6 +88,7 @@ func (l *defaultUdy) send(conn net.Conn, prefix []byte, endMark int, closed chan
 	logger.WithFields(log.Fields{
 		"prefix": string(prefix),
 	}).Trace("Sending prefix")
+
 	if _, err := conn.Write(prefix); err != nil {
 		logger.WithFields(log.Fields{
 			"prefix": prefix,
@@ -113,7 +116,7 @@ func (l *defaultUdy) send(conn net.Conn, prefix []byte, endMark int, closed chan
 		case <-l.Sender.Wait(currentMark, endMark):
 		}
 
-		segment, currentMark = l.Provider.GetNextBytes(currentMark, endMark)
+		segment, currentMark = l.SStrat.GetNextBytes(currentMark, endMark)
 		logger.WithFields(log.Fields{
 			"segment":     string(segment),
 			"currentMark": currentMark,
