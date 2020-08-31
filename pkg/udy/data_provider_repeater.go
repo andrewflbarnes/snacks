@@ -1,18 +1,11 @@
 package udy
 
-type repeaterDataProvider struct {
+type RepeaterDataProvider struct {
 	BytesToSend []byte
 	Repetitions int
 }
 
-func NewRepeaterDataProvider(BytesToSend []byte, Repetitions int) DataProvider {
-	return repeaterDataProvider{
-		BytesToSend,
-		Repetitions,
-	}
-}
-
-func (s repeaterDataProvider) GetNextBytes(currentDataIndex int, size int) ([]byte, int) {
+func (s RepeaterDataProvider) GetNextBytes(currentDataIndex int, size int) ([]byte, int) {
 	currentDataIndex++
 	if currentDataIndex > s.Repetitions {
 		return nil, currentDataIndex

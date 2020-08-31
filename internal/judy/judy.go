@@ -60,9 +60,9 @@ func Judy() {
 	logger.Info("Starting")
 
 	// Create a new Udy instance
-	dataProvider := udy.NewFixedByteDataProvider(sendBytes)
-	sendStrategy := udy.NewFixedSendStrategy(sendDelay)
-	l := udy.NewUdy(dataProvider, sendStrategy, maxConns)
+	dataProvider := udy.FixedByteDataProvider{BytesPerSend: sendBytes}
+	sendStrategy := udy.FixedSendStrategy{DelayPerSend: sendDelay}
+	l := udy.New(dataProvider, sendStrategy, maxConns)
 
 	if test {
 		// Start a server which will receive the payload
@@ -101,7 +101,7 @@ func logExecutionDetails(execution string, prefix []byte) {
 	}
 	logger.WithFields(log.Fields{
 		"type":      execution,
-		"target":    dest.Host,
+		"dest":      dest,
 		"size":      *flagSize,
 		"duration":  *flagTime,
 		"test":      *flagTest,

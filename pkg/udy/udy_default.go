@@ -70,7 +70,7 @@ func (l *defaultUdy) executeOnConnection(conn net.Conn, prefix []byte, size int)
 	return closed
 }
 
-// Note: marks are specific to tthe send strategy implementation. They may relate to the number
+// Note: marks are specific to the send strategy implementation. They may relate to the number
 // of bytes sent of the number of iterations complete for example.
 func (l *defaultUdy) send(conn net.Conn, prefix []byte, endMark int, closed chan bool) {
 	l.connections++

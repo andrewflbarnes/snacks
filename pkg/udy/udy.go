@@ -16,29 +16,27 @@ var (
 
 // Udy is the interface defining the API for executing slow attacks
 //
-// Execute launches a UDY type attack for this instance on a single connection
+// Execute launches a UDY type attack for this instance on a single connection.
 // It returns a channel indicating when the send has complete and a channel
 // indicating response data received.
 // The operands define the connection to send on, a payload prefix and the number
-// of arbitrary bytes to send to maintain the attack. The payload prefix is useful
-// for ensuring the protocol is enforced
+// of arbitrary bytes/repeats to send to maintain the attack per connection.
+// The payload prefix is useful for ensuring the protocol is enforced.
 //
-// ExecuteContinuous launches a UDY attack for this instance across mutliple.
-// As this continuously executes Stop must be explicitly called to end it.
-// The operands define the host and port to connect to, a payload prefix and the number
-// of arbitrary bytes to send to maintain the attack. The payload prefix is useful
-// for ensuring the protocol is enforced
-//
-// Stop stops the current execution in progress and any returned channel from an
-// Execute method will complete
+// ExecuteContinuous launches a UDY attack for this instance across mutliple connections.
+// As this continuously executes it relies on the program ending to stop the attack.
+// The operands define the target to attach, a payload prefix and the number of arbitrary
+// bytes/repeats to send to maintain the attack per connection.
+// The payload prefix is useful for ensuring the protocol is enforced.
 type Udy interface {
 	Execute(conn net.Conn, prefix []byte, size int) chan bool
-	// TODO use URI?
 	ExecuteContinuous(dest *url.URL, prefix []byte, size int)
+	// TODO graceful close
 }
 
-// NewUdy returns a new Udy instance with the requested send strategy
-func NewUdy(dataProvider DataProvider, sendStrategy SendStrategy, maxConns int) Udy {
+// New returns a new Udy instance with a specific data provider, send strategy, and
+// maximum number of connections to attack on
+func New(dataProvider DataProvider, sendStrategy SendStrategy, maxConns int) Udy {
 	return &defaultUdy{
 		dataProvider,
 		sendStrategy,

@@ -9,9 +9,3 @@ type FixedSendStrategy struct {
 func (s FixedSendStrategy) Wait(currentDataIndex int, totalLength int) <-chan time.Time {
 	return time.After(s.DelayPerSend)
 }
-
-func NewFixedSendStrategy(delay time.Duration) SendStrategy {
-	return FixedSendStrategy{
-		DelayPerSend: delay,
-	}
-}
