@@ -7,7 +7,7 @@ import (
 )
 
 type HttpRequestBuilder struct {
-	Verb     HttpVerb
+	Verb     verb
 	Headers  map[string]string
 	Body     string
 	Endpoint string

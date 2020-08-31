@@ -1,45 +1,24 @@
 package http
 
-type HttpVerb int
+type verb string
 
 const (
-	Head HttpVerb = iota
-	Get
-	Post
-	Delete
-	Put
-	Connect
-	Options
-	Trace
-	Patch
+	Head    verb = "HEAD"
+	Get     verb = "GET"
+	Post    verb = "POST"
+	Delete  verb = "DELETE"
+	Put     verb = "PUT"
+	Connect verb = "CONNECT"
+	Options verb = "OPTIONS"
+	Trace   verb = "TRACE"
+	Patch   verb = "PATCH"
 )
 
-func (v HttpVerb) String() string {
-	switch v {
-	case Head:
-		return "HEAD"
-	case Get:
-		return "GET"
-	case Post:
-		return "POST"
-	case Delete:
-		return "DELETE"
-	case Put:
-		return "PUT"
-	case Connect:
-		return "CONNECT"
-	case Options:
-		return "OPTIONS"
-	case Trace:
-		return "TRACE"
-	case Patch:
-		return "PATCH"
-	}
-
-	return "UNRECOGNISED"
+func (v verb) String() string {
+	return string(v)
 }
 
-func (v HttpVerb) hasBody() bool {
+func (v verb) hasBody() bool {
 	switch v {
 	case Put, Post, Patch:
 		return true
