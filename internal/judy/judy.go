@@ -60,7 +60,7 @@ func Judy() {
 	logger.Info("Starting")
 
 	// Create a new Udy instance
-	dataProvider := udy.FixedByteDataProvider{BytesPerSend: sendBytes}
+	dataProvider := udy.FixedByteDataProvider(sendBytes)
 	sendStrategy := udy.FixedSendStrategy{DelayPerSend: sendDelay}
 	l := udy.New(dataProvider, sendStrategy, maxConns)
 

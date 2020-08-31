@@ -36,11 +36,18 @@ func initSendBuffer(size int) {
 	}
 }
 
-type FixedByteDataProvider struct {
+type fixedByteDataProvider struct {
 	BytesPerSend int
 }
 
-func (s FixedByteDataProvider) GetNextBytes(currentDataIndex int, size int) ([]byte, int) {
+func FixedByteDataProvider(BytesPerSend int) DataProvider {
+	initSendBuffer(BytesPerSend)
+	return fixedByteDataProvider{
+		BytesPerSend,
+	}
+}
+
+func (s fixedByteDataProvider) GetNextBytes(currentDataIndex int, size int) ([]byte, int) {
 	nextDataIndex := maths.Min(currentDataIndex+s.BytesPerSend, size)
 
 	logger.WithFields(log.Fields{
