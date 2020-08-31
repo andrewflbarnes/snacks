@@ -7,8 +7,8 @@ import (
 	"os"
 	"strconv"
 	"time"
-	"unicode"
 
+	"github.com/andrewflbarnes/snacks/pkg/strs"
 	"github.com/andrewflbarnes/snacks/pkg/udy"
 
 	"github.com/andrewflbarnes/snacks/internal/helper"
@@ -19,14 +19,15 @@ import (
 var (
 	logger = log.WithFields(log.Fields{})
 
-	flagsJudy = flag.NewFlagSet("judy", flag.ExitOnError)
-	flagOnce  = flagsJudy.Bool("once", false, "Establish a single connection")
-	flagTime  = flagsJudy.Duration("time", time.Hour, "How long to run the test for (not applicable if -once enabled)")
-	flagTest  = flagsJudy.Bool("test", false, "Runs an embedded server to connect to")
-	flagSize  = flagsJudy.Int("size", 1_000_000, "The size of the request payload to send")
-	flagDelay = flagsJudy.Duration("sd", 1*time.Second, "The delay in ms between each send")
-	flagBytes = flagsJudy.Int("sb", 5, "The number of bytes to send in each send")
-	flagMax   = flagsJudy.Int("max", 1000, "The maximum number of connections to establish")
+	flagsJudy   = flag.NewFlagSet("judy", flag.ExitOnError)
+	flagOnce    = flagsJudy.Bool("once", false, "Establish a single connection")
+	flagTime    = flagsJudy.Duration("time", time.Hour, "How long to run the test for (not applicable if -once enabled)")
+	flagTest    = flagsJudy.Bool("test", false, "Runs an embedded server to connect to")
+	flagSize    = flagsJudy.Int("size", 1_000_000, "The size of the request payload to send")
+	flagDelay   = flagsJudy.Duration("sd", 1*time.Second, "The delay in ms between each send")
+	flagBytes   = flagsJudy.Int("sb", 5, "The number of bytes to send in each send")
+	flagMax     = flagsJudy.Int("max", 1000, "The maximum number of connections to establish")
+	flagContent = flagsJudy.String("type", http.ApplicationJSON.String(), "The content type of data to send")
 
 	dest *url.URL
 )
@@ -91,7 +92,7 @@ func Judy() {
 }
 
 func logExecutionDetails(execution string, prefix []byte) {
-	if isPrintable(prefix) {
+	if strs.IsPrintable(prefix) {
 		logger.Infof("Prefix:\n%s", prefix)
 	}
 	logger.WithFields(log.Fields{
@@ -103,19 +104,8 @@ func logExecutionDetails(execution string, prefix []byte) {
 		"sendBytes": *flagBytes,
 		"sendDelay": *flagDelay,
 		"maxConns":  *flagMax,
+		"content":   *flagContent,
 	}).Info("Starting Judy attack")
-}
-
-func isPrintable(bytes []byte) bool {
-	for _, c := range string(bytes) {
-		if !unicode.IsPrint(c) &&
-			c != '\n' &&
-			c != '\r' &&
-			c != '\t' {
-			return false
-		}
-	}
-	return true
 }
 
 func executeOnce(l udy.Udy, prefix []byte) {
@@ -135,21 +125,17 @@ func executeOnce(l udy.Udy, prefix []byte) {
 }
 
 func getPayloadPrefix() []byte {
-	// if http...
-	// return getHTTPPayload(http.Post, helper.ApplicationJsonPrefix)
-	return getHTTPPayload(http.Post, helper.ApplicationXWWWFormUrlencodedPrefix)
-}
-
-func getHTTPPayload(verb http.HttpVerb, media helper.MediaPrefix) []byte {
 	size := *flagSize
 	host := dest.Host
 	endpoint := dest.Path
+	verb := http.Post
+	media := http.ToContentType(*flagContent)
 
-	contentTypePrefix := media.Prefix()
+	contentTypePrefix := helper.GetPayloadPrefix(media)
 	contentTypePrefixLen := len(contentTypePrefix)
 
 	headers := map[string]string{
-		"Content-Type":   media.Name(),
+		"Content-Type":   media.String(),
 		"Accept":         "*/*",
 		"Content-Length": strconv.Itoa(size + contentTypePrefixLen),
 		"Host":           host,
