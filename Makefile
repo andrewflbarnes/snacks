@@ -1,6 +1,7 @@
 .SILENT:
 .DEFAULT_GOAL = build
 VERSION := $(shell git describe --always --long --dirty)
+TARGETS := $(wildcard cmd/*)
 
 .PHONY: help
 help:
@@ -9,14 +10,15 @@ help:
 
 .PHONY: build
 build:
-	for i in cmd/*; do \
+	@for i in $(TARGETS); do \
 	  echo $(call goexec, build, ./$$i); \
 	  $(call goexec, build, ./$$i); \
 	done
 
 .PHONY: install
 install:
-	@for i in cmd/*; do \
+	@for i in $(TARGETS); do \
+	  echo $(call goexec, install, ./$$i); \
 	  $(call goexec, install, ./$$i); \
 	done
 
