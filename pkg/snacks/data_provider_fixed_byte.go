@@ -1,4 +1,4 @@
-package udy
+package snacks
 
 import (
 	"bytes"

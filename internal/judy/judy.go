@@ -12,8 +12,8 @@ import (
 	"github.com/andrewflbarnes/snacks/internal/flags"
 	"github.com/andrewflbarnes/snacks/internal/helper"
 	"github.com/andrewflbarnes/snacks/pkg/http"
+	"github.com/andrewflbarnes/snacks/pkg/snacks"
 	"github.com/andrewflbarnes/snacks/pkg/strs"
-	"github.com/andrewflbarnes/snacks/pkg/udy"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -60,10 +60,10 @@ func Judy() {
 
 	logger.Info("Starting")
 
-	// Create a new Udy instance
-	dataProvider := udy.FixedByteDataProvider(sendBytes)
-	sendStrategy := udy.FixedSendStrategy{DelayPerSend: sendDelay}
-	l := udy.New(dataProvider, sendStrategy, maxConns)
+	// Create a new Snacks instance
+	dataProvider := snacks.FixedByteDataProvider(sendBytes)
+	sendStrategy := snacks.FixedSendStrategy{DelayPerSend: sendDelay}
+	l := snacks.New(dataProvider, sendStrategy, maxConns)
 
 	if test {
 		// Start a server which will receive the payload
@@ -110,7 +110,7 @@ func logExecutionDetails(execution string, prefix []byte) {
 	}).Info("Starting Judy attack")
 }
 
-func executeOnce(l udy.Udy, prefix []byte) {
+func executeOnce(l snacks.Snacks, prefix []byte) {
 	size := *flagSize
 	target := dest.Host
 

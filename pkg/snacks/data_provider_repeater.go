@@ -1,4 +1,4 @@
-package udy
+package snacks
 
 // RepeaterDataProvider implements DataProvider providing the specified byte slice repeatedly.
 // The current index is used to track how many repetitions have been returned so far and the size

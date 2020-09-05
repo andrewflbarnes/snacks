@@ -1,8 +1,8 @@
-package udy
+package snacks
 
 import "time"
 
-// SendStrategy defines a data for how data is sent in attacks orchestrated by udy.
+// SendStrategy defines how data is sent in attacks orchestrated by snacks.
 //
 // Wait should return a channel which is received from at some point in the future,
 // typically by returning some kind of time.After(duration) channel. The current data

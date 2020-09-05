@@ -1,4 +1,4 @@
-package udy
+package snacks
 
 import (
 	"net"
@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type defaultUdy struct {
+type defaultSnacks struct {
 	Provider    DataProvider
 	Sender      SendStrategy
 	MaxConns    int
@@ -16,15 +16,15 @@ type defaultUdy struct {
 	running     bool
 }
 
-func (l *defaultUdy) Stop() {
+func (l *defaultSnacks) Stop() {
 	l.running = false
 }
 
-func (l *defaultUdy) Execute(conn net.Conn, prefix []byte, size int) chan bool {
+func (l *defaultSnacks) Execute(conn net.Conn, prefix []byte, size int) chan bool {
 	return l.executeOnConnection(conn, prefix, size)
 }
 
-func (l *defaultUdy) ExecuteContinuous(dest *url.URL, prefix []byte, size int) {
+func (l *defaultSnacks) ExecuteContinuous(dest *url.URL, prefix []byte, size int) {
 	target := dest.Host
 
 	go l.track()
@@ -64,7 +64,7 @@ func (l *defaultUdy) ExecuteContinuous(dest *url.URL, prefix []byte, size int) {
 	}
 }
 
-func (l *defaultUdy) track() {
+func (l *defaultSnacks) track() {
 	for {
 		logger.Infof("Managing %d connections", l.connections)
 		time.Sleep(5 * time.Second)
@@ -74,7 +74,7 @@ func (l *defaultUdy) track() {
 	}
 }
 
-func (l *defaultUdy) executeOnConnection(conn net.Conn, prefix []byte, size int) chan bool {
+func (l *defaultSnacks) executeOnConnection(conn net.Conn, prefix []byte, size int) chan bool {
 	closed := make(chan bool)
 
 	go l.send(conn, prefix, size, closed)
@@ -82,7 +82,7 @@ func (l *defaultUdy) executeOnConnection(conn net.Conn, prefix []byte, size int)
 	return closed
 }
 
-func (l *defaultUdy) send(conn net.Conn, prefix []byte, endMark int, closed chan bool) {
+func (l *defaultSnacks) send(conn net.Conn, prefix []byte, endMark int, closed chan bool) {
 	l.connections++
 
 	defer func() {
@@ -152,7 +152,7 @@ func (l *defaultUdy) send(conn net.Conn, prefix []byte, endMark int, closed chan
 	logger.Debug("Payload sent")
 }
 
-func (l defaultUdy) monitorConnection(conn net.Conn, done chan<- bool) {
+func (l defaultSnacks) monitorConnection(conn net.Conn, done chan<- bool) {
 	defer func() { done <- true }()
 
 	read := make([]byte, 1)

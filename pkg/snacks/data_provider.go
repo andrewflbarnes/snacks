@@ -1,7 +1,7 @@
-package udy
+package snacks
 
 // DataProvider defines an interface for providing data to be included in
-// payloads for attacks orchestrated by udy.
+// payloads for attacks orchestrated by snacks.
 //
 // GetNextBytes returns the next sequence of bytes based on the current data index
 // and the total "size" of the data required. Note that is the data provider which
