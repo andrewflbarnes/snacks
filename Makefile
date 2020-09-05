@@ -6,7 +6,8 @@ TARGETS := $(wildcard cmd/*)
 .PHONY: help
 help:
 	@echo "help:      display this help text"
-	@echo "build:     build all binaries specified in cmd"
+	@echo "build:     (default) build all binaries specified in cmd (go build)"
+	@echo "install:   install all binaries specified in cmd (go install)"
 
 .PHONY: build
 build:
