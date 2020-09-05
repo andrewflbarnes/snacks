@@ -33,6 +33,7 @@ For a full list of options, defaults and what they do
 ./snacks judy -h
 ```
 
+Example:
 ```bash
 ./snacks judy -size 1000000 -sd 10ms -sb 7 -vv localhost:8888/boom
 ```
@@ -54,6 +55,7 @@ For a full list of options, defaults and what they do
 ./snacks loris -h
 ```
 
+Example:
 ```bash
 ./snacks loris -size 1000000 -sd 1s -head "x-slow: loris" -vv localhost:8888/boom
 ```
@@ -103,20 +105,17 @@ Tomcat 8 seems to be particularly susceptible to RUDY attacks in it's default co
 the Http11NioProtocol. For example you can hit a management endpoint or an arbitrary path on a
 springboot webapp:
 ```bash
+# first terminal
 snacks judy \
-  -size 1000000 \
-  -sb 10 \
   -type application/x-www-form-urlencoded \
   -basic tomcat:tomcat \
-  -max 400 \
   localhost:8888/manager/html/expire
-
+#or
 snacks judy \
-  -size 1000000 \
-  -sb 10 \
-  -basic tomcat:tomcat \
-  -max 400 \
   localhost:8888/mywebapp
+  
+# second terminal
+while clear; do date; curl localhost:8888 -v; date; sleep 1; done
 ```
 
 Loss of service occurs around 200 connections in. Perhaps unsuprisingly this matches with the max number
