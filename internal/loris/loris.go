@@ -26,7 +26,7 @@ var (
 	flagSize   = flagsLoris.Int("size", 1_000_000, "The size of the request payload to send")
 	flagDelay  = flagsLoris.Duration("sd", 1*time.Second, "The delay in ms between each send")
 	flagMax    = flagsLoris.Int("max", 1000, "The maximum number of connections to establish")
-	flagHeader = flagsLoris.String("header", "x-snacks-slow-loris: boom", "The HTTP header to repeat for the attack")
+	flagHeader = flagsLoris.String("header", "x-snacks: slowloris", "The HTTP header to repeat for the attack")
 
 	logFlags = flags.InitLogFlags(flagsLoris)
 
