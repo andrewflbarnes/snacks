@@ -32,7 +32,7 @@ var (
 	flagPrefix  = flagsJudy.String("prefix", "", "The payload prefix to use, should be used for custom types")
 
 	logFlags  = flags.InitLogFlags(flagsJudy)
-	authFlags = flags.InitAuthFlags(flagsJudy)
+	httpFlags = flags.InitHttpFlags(flagsJudy)
 
 	dest *url.URL
 )
@@ -148,9 +148,8 @@ func getPayloadPrefix() []byte {
 		"Host":           host,
 	}
 
-	auth, ok := authFlags.GetAuth()
-	if ok {
-		headers["Authorization"] = auth
+	for k, v := range httpFlags.GetHeaders() {
+		headers[k] = v
 	}
 
 	builder := http.RequestBuilder{

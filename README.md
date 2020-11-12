@@ -30,12 +30,12 @@ MIME types found in other implementations.
 
 For a full list of options, defaults and what they do
 ```bash
-./snacks judy -h
+snacks judy -h
 ```
 
 Example:
 ```bash
-./snacks judy -size 1000000 -sd 10ms -sb 7 -vv localhost:8888/boom
+snacks judy -size 1000000 -sd 10ms -sb 7 -vv localhost:8888/boom
 ```
 The above command will
 - send 1000000 arbitrary bytes to hold the connection open (not including HTTP POST headers)
@@ -52,12 +52,12 @@ At the moment this will always send the whole header, a `-sb`/SendBytes option i
 
 For a full list of options, defaults and what they do
 ```bash
-./snacks loris -h
+snacks loris -h
 ```
 
 Example:
 ```bash
-./snacks loris -size 1000000 -sd 1s -head "x-slow: loris" -vv localhost:8888/boom
+snacks loris -size 1000000 -sd 1s -header "x-slow: loris" -vv localhost:8888/boom
 ```
 The above command will
 - send 1000000 repeat instances of the header (not most application servers limit the max. number of HTTP headers)
@@ -72,7 +72,7 @@ The above command will
 
 If a specific content-type header is required use the `-type` flag. e.g.
 ```bash
-./snacks judy -type application/x-www-form-urlencoded ...
+snacks judy -type application/x-www-form-urlencoded ...
 ```
 
 For supported content types this will set a default payload prefix which may be overridden with `-prefix`
@@ -80,13 +80,13 @@ For supported content types this will set a default payload prefix which may be 
 To override a payload prefix use the `-prefix` flag. e.g. for a default JSON content-type (which would otherwise
 default to using `{"a":"` as the payload prefix)
 ```bash
-./snacks judy -prefix '{"payload":"' ...
+snacks judy -prefix '{"payload":"' ...
 ```
 
 For custom content-types and prefix apyloads specify both `-type` and `-prefix` e.g.
 ```bash
-./snacks judy -type application/xml -prefix '<payload>' ...
-./snacks judy -type application/vnd.my.custom.type -prefix '1|string|payload|' ...
+snacks judy -type application/xml -prefix '<payload>' ...
+snacks judy -type application/vnd.my.custom.type -prefix '1|string|payload|' ...
 ```
 
 ### Useful general options
@@ -95,9 +95,20 @@ For custom content-types and prefix apyloads specify both `-type` and `-prefix` 
 
 If authorization is required use either `-basic` or `-bearer` flags e.g.
 ```bash
-./snacks loris -basic tomcat:tomcat ...
-./snacks judy -bearer 0123456789ABCDEF ...
+snacks loris -basic tomcat:tomcat ...
+snacks judy -bearer 0123456789ABCDEF ...
 ```
+
+##### Arbitrary Headers
+
+To arbitrarily set headers (inlcuding those which have specific options e.g. `-basic` and `-bearer` for `Authorization`)
+use the `-headers` option. This takes a list of HTTP headers concatenated with double pipes `||`. e.g.
+```bash
+snacks judy -headers "Authorization: custom 0123456789||Connection: keep-alive" ...
+```
+
+Note: this option is not necessarily useful for slow loris attacks which don't typically allow for headers to be parsed
+and validated.
 
 ### Examples
 

@@ -28,7 +28,8 @@ var (
 	flagMax    = flagsLoris.Int("max", 1000, "The maximum number of connections to establish")
 	flagHeader = flagsLoris.String("header", "x-snacks: slowloris", "The HTTP header to repeat for the attack")
 
-	logFlags = flags.InitLogFlags(flagsLoris)
+	logFlags  = flags.InitLogFlags(flagsLoris)
+	httpFlags = flags.InitHttpFlags(flagsLoris)
 
 	dest *url.URL
 )
@@ -133,6 +134,10 @@ func getPayloadPrefix() []byte {
 		"Accept":         "*/*",
 		"Content-Length": "1000",
 		"Host":           host,
+	}
+
+	for k, v := range httpFlags.GetHeaders() {
+		headers[k] = v
 	}
 
 	builder := http.RequestBuilder{
