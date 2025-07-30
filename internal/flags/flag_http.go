@@ -57,6 +57,9 @@ func (l httpFlagsImpl) GetHeaders() map[string]string {
 	headers := make(map[string]string)
 
 	for _, header := range strings.Split(*l.headers, "||") {
+		if len(header) == 0 {
+			continue
+		}
 		hkv := headerRe.Split(header, -1)
 		headers[hkv[0]] = hkv[1]
 	}

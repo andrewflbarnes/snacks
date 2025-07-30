@@ -25,7 +25,6 @@ install:
 
 define goexec
 	go $(strip $1) \
-	  -i \
 	  -v \
 	  -ldflags="-X main.version=$(VERSION)" $(strip $2)
 endef

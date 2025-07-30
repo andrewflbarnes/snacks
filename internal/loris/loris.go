@@ -128,7 +128,7 @@ func executeOnce(l snacks.Snacks, prefix []byte) {
 func getPayloadPrefix() []byte {
 	host := dest.Host
 	endpoint := dest.Path
-	verb := http.Post
+	verb := http.Get
 
 	headers := map[string]string{
 		"Accept":         "*/*",
